@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ data.name }} assessment — AI Healthcare Hub{% endblock %}
+{% block content %}
+<section class="condition-hero">
+  <div class="shell">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{{ url_for('views.home') }}">Home</a><span>›</span><a href="{{ url_for('views.home') }}#assessments">Assessments</a><span>›</span><span>{{ data.short_name }}</span></nav>
+    <div class="condition-hero-grid">
+      <div class="condition-copy reveal">
+        <span class="kicker">{{ data.eyebrow }}</span>
+        <h1>{{ data.name }} <em>screening</em></h1>
+        <p>{{ data.summary }}</p>
+        <div class="condition-actions">
+          <a class="button button-primary" href="{{ url_for('views.condition_form', condition=condition) }}">Start assessment <span aria-hidden="true">→</span></a>
+          <span><b>{{ data.accuracy }}%</b> reported model accuracy</span>
+        </div>
+      </div>
+      <div class="condition-image reveal">
+        <img src="{{ url_for('static', filename=data.image) }}" alt="Medical illustration for {{ data.name }}">
+        <span class="image-note"><i></i> Educational screening tool</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section condition-details">
+  <div class="shell details-grid">
+    <article class="detail-panel reveal"><span class="panel-number">01</span><span class="kicker">Overview</span><h2>What to know</h2><p>{{ data.overview }}</p></article>
+    <article class="detail-panel reveal"><span class="panel-number">02</span><span class="kicker">Common signals</span><h2>Symptoms to notice</h2><p>{{ data.symptoms_intro }}</p><ul class="check-list">{% for symptom in data.symptoms %}<li><span>✓</span>{{ symptom }}</li>{% endfor %}</ul></article>
+  </div>
+</section>
+
+<section class="section model-section">
+  <div class="shell model-grid">
+    <div class="model-copy reveal">
+      <span class="kicker kicker-light">About the model</span>
+      <h2>What you’ll need</h2>
+      {% if condition == 'pneumonia' %}
+      <p>A clear chest X-ray image in JPG, JPEG or PNG format. Images are processed to produce the on-screen result.</p>
+      {% else %}
+      <p>This assessment uses {{ data.fields|length }} inputs. For clinical measurements, use recent values from a reliable report rather than estimates.</p>
+      <div class="field-tags">{% for field in data.fields %}<span>{{ field.label }}</span>{% endfor %}</div>
+      {% endif %}
+    </div>
+    <div class="accuracy-card reveal">
+      <div class="accuracy-ring" style="--score: {{ data.accuracy }}"><div><strong>{{ data.accuracy }}%</strong><span>reported accuracy</span></div></div>
+      <p>Model performance reflects its original evaluation data and does not guarantee an individual result.</p>
+    </div>
+  </div>
+</section>
+
+<section class="assessment-cta">
+  <div class="shell cta-inner reveal"><div><span class="kicker">Ready when you are</span><h2>Begin the {{ data.short_name|lower }} assessment.</h2></div><a class="button button-primary" href="{{ url_for('views.condition_form', condition=condition) }}">Start now <span aria-hidden="true">→</span></a></div>
+</section>
+{% endblock %}

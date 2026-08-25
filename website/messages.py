@@ -9,13 +9,15 @@ messages = Blueprint('messages', __name__)
 def msg():
     if request.method == 'POST':
 
-        name = request.form.get('name')
-        email = request.form.get('email')
-        message = request.form.get('message')
+        name = request.form.get('name', '').strip()[:80]
+        email = request.form.get('email', '').strip()[:120]
+        message = request.form.get('message', '').strip()[:2000]
+        if not name or not email or not message:
+            return redirect(url_for('views.home') + '#contact')
         new_message = Messages(name=name, email=email, messages=message)
         db.session.add(new_message)
         db.session.commit()
 
-        return redirect("/")
+        return redirect(url_for('views.home') + '#contact')
     else:
         return render_template(r'base.html')

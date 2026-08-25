@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ status }} — {{ error_title }}{% endblock %}
+{% block content %}
+<section class="result-page"><div class="shell result-shell"><div class="result-card result-clear reveal visible"><div class="result-visual"><strong style="font: 700 100px 'Manrope'; color: #16a67a">{{ status }}</strong></div><div class="result-copy"><span class="result-label"><i></i> Request interrupted</span><h1>{{ error_title }}</h1><p>{{ error_description }}</p><div class="result-actions"><a class="button button-primary" href="{{ url_for('views.home') }}">Return home</a><a class="button button-outline" href="{{ url_for('views.home') }}#assessments">View assessments</a></div></div></div></div></section>
+{% endblock %}

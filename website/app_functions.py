@@ -1,26 +1,22 @@
-import pickle, os, random
+import pickle
 import numpy as np
-
-from sklearn.preprocessing import StandardScaler
-import xgboost
-import os
-from tensorflow.keras.preprocessing.image import load_img
-from tensorflow.keras.models import load_model
-import numpy as np
-from werkzeug.utils import secure_filename
 
 
 
 def get_model(path):
+    from tensorflow.keras.models import load_model
+
     model = load_model(path, compile=False)
     return model
 
 def pred(path):
+    from tensorflow.keras.preprocessing.image import load_img
+
     data = load_img(path, target_size=(224, 224, 3))
     data = np.asarray(data).reshape((-1, 224, 224, 3))
     data = data * 1.0 / 255
-    predicted = np.round(get_model('./website/app_models/pneumonia_model.h5').predict(data)[0])[0]
-    return predicted
+    predicted = get_model('./website/app_models/pneumonia_model.h5').predict(data, verbose=0)[0][0]
+    return float(predicted)
 
 def ValuePredictor(to_predict_list):
     if len(to_predict_list) == 15:
@@ -53,5 +49,6 @@ def ValuePredictor(to_predict_list):
         with open('./website/app_models/diabete_model.pkl', 'rb') as f:
             diabete_model = pickle.load(f)
         pred = diabete_model.predict(np.array(to_predict_list).reshape((-1, 8)))
-        print(pred[0], page)
-    return pred[0], page
+    else:
+        raise ValueError('Unexpected assessment input count')
+    return int(pred[0]), page

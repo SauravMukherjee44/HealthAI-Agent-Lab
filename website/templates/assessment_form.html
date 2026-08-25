@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ data.name }} screening form — AI Healthcare Hub{% endblock %}
+{% block content %}
+<section class="form-page">
+  <div class="shell">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{{ url_for('views.home') }}">Home</a><span>›</span><a href="{{ url_for('views.condition_page', condition=condition) }}">{{ data.short_name }}</a><span>›</span><span>Assessment</span></nav>
+    <div class="form-layout">
+      <aside class="form-sidebar reveal">
+        <span class="kicker">{{ data.eyebrow }}</span>
+        <h1>{{ data.name }} screening</h1>
+        <p>Enter the values below exactly as they appear on a recent health report when possible.</p>
+        <div class="progress-card"><div class="progress-head"><span>Form progress</span><strong data-progress-text>0%</strong></div><div class="progress-track"><span data-progress-bar></span></div><small><span data-completed>0</span> of {{ data.fields|length }} fields completed</small></div>
+        <div class="form-safety"><span aria-hidden="true">i</span><p><strong>Before you continue</strong>This tool is not a diagnosis and should not replace professional medical advice.</p></div>
+        <a class="back-link" href="{{ url_for('views.condition_page', condition=condition) }}">← Back to overview</a>
+      </aside>
+
+      <div class="form-card reveal">
+        <div class="form-card-head"><div><span>Assessment details</span><h2>Your health measurements</h2></div><span class="field-count">{{ data.fields|length }} fields</span></div>
+        <form action="{{ url_for('prediction.predict', condition=condition) }}" method="post" data-assessment-form>
+          <div class="fields-grid">
+            {% for field in data.fields %}
+            <label class="field">
+              <span>{{ field.label }}</span>
+              {% if field.type|default('number') == 'select' %}
+              <select name="{{ field.name }}" required data-track-field>
+                <option value="" selected disabled>Select an option</option>
+                {% for value, label in field.options %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              </select>
+              {% else %}
+              <input type="number" name="{{ field.name }}" required data-track-field min="{{ field.min|default(0) }}"{% if field.max is defined %} max="{{ field.max }}"{% endif %} step="{{ field.step|default(1) }}" placeholder="Enter value">
+              {% endif %}
+              {% if field.hint %}<small>{{ field.hint }}</small>{% endif %}
+            </label>
+            {% endfor %}
+          </div>
+          <div class="form-submit-row"><p>By continuing, you acknowledge this is an educational estimate.</p><button class="button button-primary" type="submit">Generate result <span aria-hidden="true">→</span></button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

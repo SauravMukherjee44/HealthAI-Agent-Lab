@@ -1,122 +1,100 @@
+(() => {
+  const header = document.querySelector("[data-header]");
+  const menuButton = document.querySelector("[data-menu-toggle]");
+  const navigation = document.querySelector("[data-nav]");
 
-// google map
-var map = '';
-var center;
+  const syncHeader = () => header?.classList.toggle("scrolled", window.scrollY > 24);
+  syncHeader();
+  window.addEventListener("scroll", syncHeader, { passive: true });
 
-function initialize() {
-    var mapOptions = {
-      zoom: 16,
-      center: new google.maps.LatLng(40.7679619,-73.9800172),
-      scrollwheel: false
-    };
-  
-    map = new google.maps.Map(document.getElementById('map-canvas'),  mapOptions);
+  const closeMenu = () => {
+    if (!menuButton || !navigation) return;
+    menuButton.setAttribute("aria-expanded", "false");
+    menuButton.setAttribute("aria-label", "Open navigation");
+    navigation.classList.remove("open");
+    document.body.classList.remove("menu-open");
+  };
 
-    google.maps.event.addDomListener(map, 'idle', function() {
-        calculateCenter();
-    });
-  
-    google.maps.event.addDomListener(window, 'resize', function() {
-        map.setCenter(center);
-    });
-}
-
-function calculateCenter() {
-  center = map.getCenter();
-}
-
-function loadGoogleMap(){
-    var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = 'https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&' + 'callback=initialize';
-    document.body.appendChild(script);
-}
-
-// Flexslider
-$(function(){
-  /* FlexSlider */
-  $('.flexslider').flexslider({
-      animation: "fade",
-      directionNav: false
+  menuButton?.addEventListener("click", () => {
+    const isOpen = menuButton.getAttribute("aria-expanded") === "true";
+    menuButton.setAttribute("aria-expanded", String(!isOpen));
+    menuButton.setAttribute("aria-label", isOpen ? "Open navigation" : "Close navigation");
+    navigation?.classList.toggle("open", !isOpen);
+    document.body.classList.toggle("menu-open", !isOpen);
   });
+  navigation?.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
+  window.addEventListener("resize", () => { if (window.innerWidth > 980) closeMenu(); });
 
-  new WOW().init();
-
-  // Magnific Pop up for Portfolio section
-  $('.portfolio-container').magnificPopup({
-    delegate: '.portfolio-popup', // child items selector, by clicking on it popup will open
-    type: 'image',
-    gallery: {
-      enabled: true
-    }    
-  });
-
-  loadGoogleMap();
-});
-
-// isotope
-jQuery(document).ready(function($){
-
-  if ( $('.iso-box-wrapper').length > 0 ) { 
-
-      var $container  = $('.iso-box-wrapper'), 
-        $imgs     = $('.iso-box img');
-
-      $container.imagesLoaded(function () {
-
-        $container.isotope({
-        layoutMode: 'fitRows',
-        itemSelector: '.iso-box'
-        });
-
-        $imgs.load(function(){
-          $container.isotope('reLayout');
-        })
-
+  const revealItems = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
+        }
       });
-
-      //filter items on button click
-      $('.filter-wrapper li a').click(function(){
-
-          var $this = $(this), filterValue = $this.attr('data-filter');
-
-      $container.isotope({ 
-        filter: filterValue,
-        animationOptions: { 
-            duration: 750, 
-            easing: 'linear', 
-            queue: false, 
-        }                
-      });             
-
-      // don't proceed if already selected 
-      if ( $this.hasClass('selected') ) { 
-        return false; 
-      }
-
-      var filter_wrapper = $this.closest('.filter-wrapper');
-      filter_wrapper.find('.selected').removeClass('selected');
-      $this.addClass('selected');
-
-        return false;
-      }); 
-
+    }, { threshold: 0.08, rootMargin: "0px 0px -30px" });
+    revealItems.forEach((item) => observer.observe(item));
+  } else {
+    revealItems.forEach((item) => item.classList.add("visible"));
   }
 
-});
-
-// Hide mobile menu after clicking on a link
-    $('.navbar-collapse a').click(function(){
-        $(".navbar-collapse").collapse('hide');
+  const assessmentForm = document.querySelector("[data-assessment-form]");
+  if (assessmentForm) {
+    const fields = [...assessmentForm.querySelectorAll("[data-track-field]")];
+    const progressBar = document.querySelector("[data-progress-bar]");
+    const progressText = document.querySelector("[data-progress-text]");
+    const completedText = document.querySelector("[data-completed]");
+    const updateProgress = () => {
+      const completed = fields.filter((field) => field.value !== "").length;
+      const percentage = Math.round((completed / fields.length) * 100);
+      if (progressBar) progressBar.style.width = `${percentage}%`;
+      if (progressText) progressText.textContent = `${percentage}%`;
+      if (completedText) completedText.textContent = String(completed);
+    };
+    fields.forEach((field) => {
+      field.addEventListener("input", updateProgress);
+      field.addEventListener("change", updateProgress);
     });
+    updateProgress();
+  }
 
-//jQuery for page scrolling feature - requires jQuery Easing plugin
-    $(function() {
-        $('.navbar-default a, a,').bind('click', function(event) {
-            var $anchor = $(this);
-            $('html, body').stop().animate({
-                scrollTop: $($anchor.attr('href')).offset().top - 68
-            }, 1000);
-            event.preventDefault();
-        });
-    });
+  const input = document.querySelector("[data-file-input]");
+  const dropZone = document.querySelector("[data-drop-zone]");
+  const preview = document.querySelector("[data-upload-preview]");
+  const title = document.querySelector("[data-upload-title]");
+  const subtitle = document.querySelector("[data-upload-subtitle]");
+
+  const showFile = (file) => {
+    if (!file || !preview || !title || !subtitle) return;
+    if (!file.type.match(/^image\/(jpeg|png)$/)) {
+      input.setCustomValidity("Please choose a JPG or PNG image.");
+      input.reportValidity();
+      return;
+    }
+    input.setCustomValidity("");
+    preview.src = URL.createObjectURL(file);
+    preview.classList.add("has-preview");
+    title.textContent = file.name;
+    subtitle.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB · ready to analyse`;
+  };
+
+  input?.addEventListener("change", () => showFile(input.files?.[0]));
+  ["dragenter", "dragover"].forEach((eventName) => dropZone?.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    dropZone.classList.add("dragging");
+  }));
+  ["dragleave", "drop"].forEach((eventName) => dropZone?.addEventListener(eventName, (event) => {
+    event.preventDefault();
+    dropZone.classList.remove("dragging");
+  }));
+  dropZone?.addEventListener("drop", (event) => {
+    const file = event.dataTransfer?.files?.[0];
+    if (!file || !input) return;
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    showFile(file);
+  });
+})();

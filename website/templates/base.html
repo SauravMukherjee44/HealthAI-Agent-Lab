@@ -1,343 +1,171 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-	<meta charset="utf-8">
-
-	<title>AI Healthcare Hub</title>
-	<!--
-
-
-
-http://www.tooplate.com/view/2081-solution
-
--->
-	<meta http-equiv="X-UA-Compatible" content="IE=Edge">
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="keywords" content="">
-	<meta name="description" content="">
-
-	<!-- animate -->
-	<link rel="stylesheet" href="./static/css/animate.min.css">
-	<!-- bootstrap -->
-	<link rel="stylesheet" href="./static/css/bootstrap.min.css">
-	<!-- magnific pop up -->
-	<link rel="stylesheet" href="./static/css/magnific-popup.css">
-	<!-- font-awesome -->
-	<link rel="stylesheet" href="./static/css/font-awesome.min.css">
-	<!-- google font -->
-	<link href='http://fonts.googleapis.com/css?family=Raleway:400,300,700,800' rel='stylesheet' type='text/css'>
-	<!-- custom -->
-	<link rel="stylesheet" href="./static/css/style.css">
-
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071c18">
+  <meta name="description" content="AI-assisted health screening tools for heart, liver, kidney, diabetes, stroke and pneumonia risk signals.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="HealthAI — Understand your health signals. Earlier.">
+  <meta property="og:description" content="Six focused AI-assisted health screening tools for educational use.">
+  <meta property="og:image" content="{{ url_for('static', filename='images/og.png', _external=True) }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="HealthAI — Understand your health signals. Earlier.">
+  <meta name="twitter:description" content="Six focused AI-assisted health screening tools for educational use.">
+  <meta name="twitter:image" content="{{ url_for('static', filename='images/og.png', _external=True) }}">
+  <title>{% block title %}AI Healthcare Hub — Understand health signals earlier{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-{% block content %}
+<body class="{{ 'inner-page' if request.endpoint != 'views.home' else '' }}">
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="site-header" data-header>
+    <div class="shell header-inner">
+      <a class="brand" href="{{ url_for('views.home') }}" aria-label="AI Healthcare Hub home">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span>Health<span>AI</span></span>
+      </a>
+      <button class="menu-toggle" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="site-navigation" data-menu-toggle>
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="site-nav" id="site-navigation" aria-label="Primary navigation" data-nav>
+        <a href="{{ url_for('views.home') }}#assessments">Assessments</a>
+        <a href="{{ url_for('views.home') }}#how-it-works">How it works</a>
+        <a href="{{ url_for('views.home') }}#safety">Safety</a>
+        <a class="nav-cta" href="{{ url_for('views.home') }}#assessments">Start assessment <span aria-hidden="true">→</span></a>
+      </nav>
+    </div>
+  </header>
 
-<body data-spy="scroll" data-offset="50" data-target=".navbar-collapse">
-	<!-- start navigation -->
-	<div class="navbar navbar-fixed-top navbar-default" role="navigation">
-		<div class="container">
-			<div class="navbar-header">
-				<button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-					<span class="icon icon-bar"></span>
-					<span class="icon icon-bar"></span>
-					<span class="icon icon-bar"></span>
-				</button>
-				<a href="/" class="navbar-brand"><img src="./static/images/logo.png" class="img-responsive"
-						alt="logo"></a>
-			</div>
-			<div class="collapse navbar-collapse">
-				<ul class="nav navbar-nav navbar-right">
-					<li><a href="/" class="smoothScroll">HOME</a></li>
-					<li><a href="#service" class="smoothScroll">SERVICE</a></li>
-					<li><a href="#portfolio" class="smoothScroll">MODELS</a></li>
-					<li><a href="#contact" class="smoothScroll">CONTACT</a></li>
+  <main id="main-content">
+    {% block content %}
+    <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="shell hero-grid">
+        <div class="hero-copy reveal">
+          <div class="eyebrow"><span class="live-dot"></span> AI-assisted health screening</div>
+          <h1>Understand your health signals. <em>Earlier.</em></h1>
+          <p class="hero-lead">Six focused screening tools turn common health measurements into clear, instant risk signals—so you can have a better-informed conversation with a clinician.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#assessments">Explore assessments <span aria-hidden="true">→</span></a>
+            <a class="button button-quiet" href="#how-it-works"><span class="play-icon" aria-hidden="true">▶</span> See how it works</a>
+          </div>
+          <p class="privacy-note"><span aria-hidden="true">◆</span> No account required. Assessment values are not added to a user profile.</p>
+        </div>
 
-				</ul>
-			</div>
-		</div>
-	</div>
-	<!-- end navigation -->
+        <div class="hero-visual reveal" aria-label="Preview of the health screening dashboard">
+          <div class="visual-orbit orbit-one"></div>
+          <div class="visual-orbit orbit-two"></div>
+          <div class="dashboard-card">
+            <div class="dash-topline">
+              <div><span class="tiny-label">Screening overview</span><strong>Health signals</strong></div>
+              <span class="status-pill"><i></i> Ready</span>
+            </div>
+            <div class="signal-chart" aria-hidden="true">
+              <span class="chart-label label-a">Signal</span><span class="chart-label label-b">Baseline</span>
+              <div class="chart-grid"></div>
+              <div class="signal-bars"><i style="--bar: 25%"></i><i style="--bar: 38%"></i><i style="--bar: 32%"></i><i style="--bar: 54%"></i><i style="--bar: 47%"></i><i style="--bar: 68%"></i><i style="--bar: 59%"></i><i style="--bar: 82%"></i><i style="--bar: 72%"></i><i style="--bar: 91%"></i></div>
+            </div>
+            <div class="metric-row">
+              <div class="metric"><span class="metric-icon heart-icon">♥</span><div><small>Assessments</small><strong>6 focused models</strong></div></div>
+              <div class="metric"><span class="metric-icon bolt-icon">↯</span><div><small>Typical result</small><strong>In a few seconds</strong></div></div>
+            </div>
+          </div>
+          <div class="floating-card float-top"><span>✓</span><div><small>Model status</small><strong>Available now</strong></div></div>
+          <div class="floating-card float-bottom"><span>＋</span><div><small>Designed for</small><strong>Early awareness</strong></div></div>
+        </div>
+      </div>
+      <div class="shell trust-strip">
+        <span>Screening support for</span>
+        <div><b>♥</b> Heart</div><div><b>◒</b> Liver</div><div><b>◉</b> Kidney</div><div><b>◇</b> Diabetes</div><div><b>⌁</b> Stroke</div><div><b>◐</b> Pneumonia</div>
+      </div>
+    </section>
 
-	<!-- start home -->
-	<section id="home" class="text-center">
-		<div class="templatemo_headerimage">
-			<div class="flexslider">
-				<ul class="slides">
-					<li>
-						<img src="./static/images/home.jpg" alt="">
-						<div class="slider-caption">
-							<div class="templatemo_homewrapper">
-								<h1 class="wow fadeInDown" data-wow-delay="2000">AI, The Futur of Health</h1>
-								<h2 class="wow fadeInDown" data-wow-delay="2000">
-									<span>Work together to make the big healthcare world smaller</span>
-								</h2>
-								<a href="#service" class="smoothScroll btn btn-default wow fadeInDown"
-									data-wow-delay="2000">Our Work</a>
-							</div>
-						</div>
-					</li>
+    <section class="section assessments-section" id="assessments">
+      <div class="shell">
+        <div class="section-heading reveal">
+          <div><span class="kicker">Focused assessments</span><h2>Start with what matters to you</h2></div>
+          <p>Choose an assessment, review what it evaluates, then enter the requested health measurements.</p>
+        </div>
+        <div class="assessment-grid">
+          {% set card_meta = {
+            'heart': ('01', '11 health inputs', 'coral'),
+            'diabete': ('02', '8 health inputs', 'amber'),
+            'kidney': ('03', '15 health inputs', 'blue'),
+            'liver': ('04', '10 health inputs', 'violet'),
+            'stroke': ('05', '9 health inputs', 'pink'),
+            'pneumonia': ('06', 'Chest X-ray upload', 'cyan')
+          } %}
+          {% for slug in ['heart', 'diabete', 'kidney', 'liver', 'stroke', 'pneumonia'] %}
+          {% set item = conditions[slug] %}
+          {% set meta = card_meta[slug] %}
+          <article class="assessment-card reveal">
+            <a class="card-image" href="{{ url_for('views.condition_page', condition=slug) }}">
+              <img src="{{ url_for('static', filename=item.card_image) }}" alt="" loading="lazy">
+              <span class="card-number">{{ meta[0] }}</span>
+              <span class="card-accent {{ meta[2] }}"></span>
+            </a>
+            <div class="card-body">
+              <div class="card-meta"><span>{{ item.eyebrow }}</span><span>{{ meta[1] }}</span></div>
+              <h3><a href="{{ url_for('views.condition_page', condition=slug) }}">{{ item.name }}</a></h3>
+              <p>{{ item.summary }}</p>
+              <a class="text-link" href="{{ url_for('views.condition_page', condition=slug) }}">View assessment <span aria-hidden="true">→</span></a>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
 
-				</ul>
-			</div>
-		</div>
-	</section>
-	<!-- end home -->
+    <section class="section process-section" id="how-it-works">
+      <div class="shell process-grid">
+        <div class="process-intro reveal">
+          <span class="kicker kicker-light">Simple by design</span>
+          <h2>From health data to a clearer next step.</h2>
+          <p>Each tool has a focused input set and a transparent, easy-to-read result. The goal is useful context—not a diagnosis.</p>
+          <a class="button button-light" href="#assessments">Choose an assessment</a>
+        </div>
+        <ol class="steps-list">
+          <li class="reveal"><span>01</span><div><h3>Choose a health area</h3><p>Read the overview and understand which measurements the model uses.</p></div></li>
+          <li class="reveal"><span>02</span><div><h3>Enter your measurements</h3><p>Use recent, reliable test values whenever an assessment asks for clinical data.</p></div></li>
+          <li class="reveal"><span>03</span><div><h3>Review the signal</h3><p>Use the result as a prompt for a conversation with a qualified healthcare professional.</p></div></li>
+        </ol>
+      </div>
+    </section>
 
-	<!-- start service -->
-	<div id="service">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12 text-center">
-					<h2 class="wow bounce">Our Services</h2>
-				</div>
-			</div>
-			<br>
-			<hr>
-			<div class="row">
-				<div class="col-md-4 col-sm-4">
-					<div class="media">
-						<div class="media-object media-left wow fadeIn" data-wow-delay="0.1s">
-							<i class="fa fa-globe" aria-hidden="true"></i>
-						</div>
-						<div class="media-body wow fadeIn">
-							<h3 class="media-heading"> Improved accessibility</h3>
-							<p>AI makes it possible to offer healthcare services to underdeveloped countries and places
-								with low accessibility</p>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-4 col-sm-4">
-					<div class="media">
-						<div class="media-object media-left wow fadeIn" data-wow-delay="0.3s">
-							<i class="fa fa-cog"></i>
-						</div>
-						<div class="media-body wow fadeIn">
-							<h3 class="media-heading">Early diagnosis</h3>
-							<p>Helps to discover the disease in the early stages and thus increases the chances of
-								recovery</p>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-4 col-sm-4">
-					<div class="media">
-						<div class="media-object media-left wow fadeIn" data-wow-delay="0.6s">
-							<i class="fa fa-usd" aria-hidden="true"></i>
-						</div>
-						<div class="media-body wow fadeIn" data-wow-delay="0.3s">
-							<h3 class="media-heading">Reduce cost</h3>
-							<p>AI minimizes the work of medical personnel and avoids very expensive medical examinations
-								and tests</p>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="row">
-				<div class="col-md-4 col-sm-4">
-					<div class="media">
-						<div class="media-object media-left wow fadeIn" data-wow-delay="0.9s">
-							<i class="fa fa-heartbeat" aria-hidden="true"></i>
-						</div>
-						<div class="media-body wow fadeIn" data-wow-delay="0.6s">
-							<h3 class="media-heading">Accurate</h3>
-							<p>We use the top performing machine learning algorithms and models to ensure highly
-								accurate prediction</p>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-4 col-sm-4">
-					<div class="media">
-						<div class="media-object media-left wow fadeIn" data-wow-delay="0.4s">
-							<i class="fa fa-medkit" aria-hidden="true"></i>
-						</div>
-						<div class="media-body wow fadeIn" data-wow-delay="0.3s">
-							<h3 class="media-heading">Quick Predictions</h3>
-							<p>With our app The patient has only to enter a few parameters/personal information and get
-								the diagnosis in seconds</p>
-						</div>
-					</div>
-				</div>
-				<div class="col-md-4 col-sm-4">
-					<div class="media">
-						<div class="media-object media-left wow fadeIn" data-wow-delay="0.8s">
-							<i class="fa fa-check-circle"></i>
-						</div>
-						<div class="media-body wow fadeIn" data-wow-delay="0.6s">
-							<h3 class="media-heading">No Human Errors</h3>
-							<p>The use of AI in medicine reduces the involvement of humans by automating medical
-								procedures which eliminates the rate of human error</p>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<!-- end service -->
+    <section class="section safety-section" id="safety">
+      <div class="shell safety-card reveal">
+        <div class="safety-icon" aria-hidden="true">i</div>
+        <div>
+          <span class="kicker">Important context</span>
+          <h2>A screening signal is not a medical diagnosis.</h2>
+          <p>These predictions are educational and may be wrong. Never delay professional care because of a result shown here. If you have severe or sudden symptoms—especially chest pain, breathing difficulty or signs of stroke—contact local emergency services immediately.</p>
+        </div>
+      </div>
+    </section>
 
+    <section class="section contact-section" id="contact">
+      <div class="shell contact-grid">
+        <div class="contact-copy reveal"><span class="kicker">Have feedback?</span><h2>Help make the experience better.</h2><p>Share a suggestion, report an issue or ask a question about the project.</p><a href="mailto:sauravmukherjee928@gmail.com">sauravmukherjee928@gmail.com</a></div>
+        <form class="contact-form reveal" action="{{ url_for('messages.msg') }}" method="post">
+          <div class="two-fields"><label>Name<input name="name" type="text" autocomplete="name" required maxlength="80" placeholder="Your name"></label><label>Email<input name="email" type="email" autocomplete="email" required maxlength="120" placeholder="you@example.com"></label></div>
+          <label>Message<textarea name="message" rows="5" required maxlength="2000" placeholder="How can we improve?"></textarea></label>
+          <button class="button button-primary" type="submit">Send message <span aria-hidden="true">→</span></button>
+        </form>
+      </div>
+    </section>
+    {% endblock %}
+  </main>
 
-	<!-- start portfolio -->
-	<div id="portfolio">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-12 text-center">
-					<h2 class="wow bounce">Our models</h2>
-					<br>
-					<br>
-					<div class="iso-section wow fadeIn" data-wow-delay="0.6s">
-
-						<div class="iso-box-section">
-							<div class="iso-box-wrapper col4-iso-box portfolio-container">
-
-								<div class="iso-box graphic photoshop wallpaper col-md-4 col-sm-6 col-xs-12">
-									<div class="portfolio-thumb">
-										<img src="./static/images/model_img/liver.jpg" class="fluid-img"
-											alt="portfolio img">
-										<div class="portfolio-overlay">
-											<a href="/liver" class="fa fa-search"></a>
-											<h4>Liver disease</h4>
-											<p>Check your chance of getting a chronical liver disease</p>
-										</div>
-									</div>
-								</div>
-
-								<div class="iso-box graphic wallpaper col-md-4 col-sm-6 col-xs-12">
-									<div class="portfolio-thumb">
-										<img src="./static/images/model_img/pneumonia.jpg" class="fluid-img"
-											alt="portfolio img">
-										<div class="portfolio-overlay">
-
-											<a href="/pneumonia" class="fa fa-search"></a>
-											<h4>Pneumonia</h4>
-											<p>Check your chance of getting a Pneumonia disease</p>
-										</div>
-									</div>
-								</div>
-
-								<div class="iso-box wallpaper col-md-4 col-sm-6 col-xs-12">
-									<div class="portfolio-thumb">
-										<img src="./static/images/model_img/kidney.jpg" class="fluid-img"
-											alt="portfolio img">
-										<div class="portfolio-overlay">
-
-											<a href="/kidney" class="fa fa-search"></a>
-											<h4>Kidney disease</h4>
-											<p>Check your chance of getting a chronical kidney disease</p>
-										</div>
-									</div>
-								</div>
-
-								<div class="iso-box graphic col-md-4 col-sm-6 col-xs-12">
-									<div class="portfolio-thumb">
-										<img src="./static/images/model_img/diabete.jpg" class="fluid-img"
-											alt="portfolio img">
-										<div class="portfolio-overlay">
-
-
-											<a href="/diabete" class="fa fa-search"></a>
-											<h4>Diabete</h4>
-											<p>Check your chance of getting a Diabete disease</p>
-										</div>
-									</div>
-								</div>
-
-								<div class="iso-box wallpaper col-md-4 col-sm-6 col-xs-12">
-									<div class="portfolio-thumb">
-										<img src="./static/images/model_img/stroke.jpg" class="fluid-img"
-											alt="portfolio img">
-										<div class="portfolio-overlay">
-
-
-											<a href="/stroke" class="fa fa-search"></a>
-											<h4>Stroke</h4>
-											<p>Check your chance of getting a Stroke disease</p>
-										</div>
-									</div>
-								</div>
-
-								<div class="iso-box graphic photoshop col-md-4 col-sm-6 col-xs-12">
-									<div class="portfolio-thumb">
-										<img src="./static/images/model_img/heart.jpg" class="fluid-img"
-											alt="portfolio img">
-										<div class="portfolio-overlay">
-
-											<a href="/heart" class="fa fa-search"></a>
-											<h4>Heart disease</h4>
-											<p>Check your chance of getting a heart disease</p>
-										</div>
-									</div>
-								</div>
-
-							</div>
-						</div>
-
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
-	<!-- end portfolio -->
-
-	<!-- start contact -->
-	<div id="contact">
-		<div class="container">
-			<div class="row">
-				<div class="col-md-3 col-sm-4 wow fadeInLeft" data-wow-delay="0.6s">
-					<h2><strong>AI Healthcare Hub</strong></h2>
-					
-
-				</div>
-				<div class="col-md-3 col-sm-4 wow fadeIn" data-wow-delay="0.9s">
-					<address>
-						<h3>Contact us</h3>
-						<p><i class="fa fa-envelope-o too-icon"></i> sauravmukherjee928@gmail.com</p>
-					</address>
-				</div>
-				<form action="{{ url_for('messages.msg') }}" method="POST" class="col-md-6 col-sm-4" id="contact-form"
-					role="form">
-					<div class="col-md-6 col-sm-12 wow fadeIn" data-wow-delay="0.3s">
-						<input name="name" type="text" class="form-control" id="name" placeholder="Name" required>
-					</div>
-					<div class="col-md-6 col-sm-12 wow fadeIn" data-wow-delay="0.3s">
-						<input name="email" type="email" class="form-control" id="email" placeholder="Email" required>
-					</div>
-					<div class="col-md-12 col-sm-12 wow fadeIn" data-wow-delay="0.9s">
-						<textarea name="message" rows="5" class="form-control" id="message" placeholder="Message"
-							required></textarea>
-					</div>
-					<div class="col-md-offset-9 col-md-3 col-sm-6 wow fadeIn" data-wow-delay="0.3s">
-						<input name="submit" type="submit" class="form-control" id="submit" value="Send">
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
-	<!-- end contact -->
-
-	{% endblock %}
-
-
-
-	<!-- jQuery -->
-	<script src="./static/js/jquery.js"></script>
-	<!-- bootstrap -->
-	<script src="./static/js/bootstrap.min.js"></script>
-	<!-- isotope -->
-	<script src="./static/js/isotope.js"></script>
-	<!-- images loaded -->
-	<script src="./static/js/imagesloaded.min.js"></script>
-	<!-- wow -->
-	<script src="./static/js/wow.min.js"></script>
-	<!-- smoothScroll -->
-	<script src="./static/js/smoothscroll.js"></script>
-	<!-- jquery flexslider -->
-	<script src="./static/js/jquery.flexslider.js"></script>
-	<!-- Magnific Pop up -->
-	<script src="./static/js/jquery.magnific-popup.min.js"></script>
-	<!-- custom -->
-	<script src="./static/js/custom.js"></script>
-
+  <footer class="site-footer">
+    <div class="shell footer-main">
+      <div><a class="brand brand-footer" href="{{ url_for('views.home') }}"><span class="brand-mark" aria-hidden="true"><span></span></span><span>Health<span>AI</span></span></a><p>AI-assisted screening for earlier health awareness.</p></div>
+      <div class="footer-links"><a href="{{ url_for('views.home') }}#assessments">Assessments</a><a href="{{ url_for('views.home') }}#how-it-works">How it works</a><a href="{{ url_for('views.home') }}#safety">Safety</a><a href="{{ url_for('views.home') }}#contact">Contact</a></div>
+    </div>
+    <div class="shell footer-bottom"><span>© 2026 AI Healthcare Hub</span><span>For educational screening only · Not medical advice</span></div>
+  </footer>
+  <script src="{{ url_for('static', filename='js/custom.js') }}" defer></script>
 </body>
-
 </html>

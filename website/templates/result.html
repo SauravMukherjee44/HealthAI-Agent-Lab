@@ -1,49 +1,25 @@
-{% extends "disease_page.html" %}
-{% block page %}
-  
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-  <br>
-
-  <h2 class="pt-10 text-center">{{page}} Disease Prediction </h2>
-  
-
-  <div style="width: 90%; margin: auto; text-align: center">
-  	{% if prediction == 0 %}
-      <img src="./static/images/happy.jpg" style ="max-width: 500px; max-height: 450px; margin-top: 30px; margin-bottom: 20px">
-      <br>
-      <br>
-      <p style="font-style: italic; font-size: 20px">No need to fear. You have no dangerous symptoms of the {{page}} disease</p>
-      <br>
-      <br>
-       <div class="prediction text-center">
-		    <a href="/" class="smoothScroll btn btn-success wow fadeInDown" data-wow-delay="2000">Back Home</a>
-	  	</div>
-      <br>
-      <br>
-
-    {% elif prediction == 1 %}
-      <img src="./static/images/sad.png" style ="max-width: 500px; max-height: 450px; margin-top: 30px; margin-bottom: 20px">
-      <br>
-      <br>
-      <p style="font-style: italic; font-size: 20px">Sorry, it seems that you are in risk of getting {{page}} disease</p>
-      <br>
-      <br>
-
-
-      <div class="prediction text-center">
-		    <a href="/" class="smoothScroll btn btn-success wow fadeInDown" data-wow-delay="2000">Back Home</a>
-	  	</div>
-
-
-     {% endif %}
+{% extends "base.html" %}
+{% set slug = 'diabete' if page == 'diabete' else page %}
+{% set item = conditions[slug] %}
+{% block title %}{{ item.name }} screening result — AI Healthcare Hub{% endblock %}
+{% block content %}
+<section class="result-page">
+  <div class="shell result-shell">
+    <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{{ url_for('views.home') }}">Home</a><span>›</span><a href="{{ url_for('views.condition_page', condition=slug) }}">{{ item.short_name }}</a><span>›</span><span>Result</span></nav>
+    <div class="result-card {{ 'result-caution' if prediction == 1 else 'result-clear' }} reveal">
+      <div class="result-visual"><img src="{{ url_for('static', filename='images/sad.png' if prediction == 1 else 'images/happy.jpg') }}" alt=""></div>
+      <div class="result-copy">
+        <span class="result-label"><i></i> Screening complete</span>
+        {% if prediction == 0 %}
+        <h1>No elevated pattern was identified.</h1><p>The model did not identify a pattern associated with {{ item.name|lower }} from the values entered. This does not rule out disease.</p>
+        {% else %}
+        <h1>An elevated pattern was identified.</h1><p>The values entered match patterns associated with {{ item.name|lower }} in this model. This is not a diagnosis; arrange an evaluation with a qualified healthcare professional.</p>
+        {% endif %}
+        <div class="next-steps"><strong>Recommended next step</strong><p>{{ 'Continue routine care and discuss any ongoing symptoms with a clinician.' if prediction == 0 else 'Save your input values and discuss them with a healthcare professional.' }}</p></div>
+        <div class="result-actions"><a class="button button-primary" href="{{ url_for('views.condition_form', condition=slug) }}">Run again</a><a class="button button-outline" href="{{ url_for('views.home') }}#assessments">All assessments</a></div>
+      </div>
+    </div>
+    <div class="result-disclaimer"><span aria-hidden="true">i</span><p><strong>Remember:</strong> AI screening can produce false positives and false negatives. Do not start, stop or change treatment based on this result.</p></div>
   </div>
-  <br>
-  <br>
-  <br>
-
-    
+</section>
 {% endblock %}
