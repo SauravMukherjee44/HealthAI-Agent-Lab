@@ -91,11 +91,15 @@ const stageOrchestration = document.querySelector<HTMLElement>("#stage-orchestra
 const stageVerification = document.querySelector<HTMLElement>("#stage-verification")!;
 const stageButtons = document.querySelectorAll<HTMLButtonElement>("[data-stage-target]");
 const pipelineSteps = [...document.querySelectorAll<HTMLElement>(".pipeline-stepper > span")];
-const liveToolCount = document.querySelector<HTMLElement>("#live-tool-count")!;
-const evaluationRuntime = document.querySelector<HTMLElement>("#evaluation-runtime")!;
+const modelsRuntime = document.querySelector<HTMLElement>("#models-runtime")!;
+const modelsGallery = document.querySelector<HTMLElement>("#models-gallery")!;
+const playgroundIdentity = document.querySelector<HTMLElement>("#playground-identity")!;
+const playgroundStage = document.querySelector<HTMLElement>("#playground-stage")!;
+const refreshModels = document.querySelector<HTMLButtonElement>("#refresh-models")!;
+const exploreModels = document.querySelector<HTMLButtonElement>("#explore-models")!;
+const modelFilterButtons = document.querySelectorAll<HTMLButtonElement>("[data-model-filter]");
 const registryRuntime = document.querySelector<HTMLElement>("#registry-runtime")!;
 const registryBody = document.querySelector<HTMLElement>("#model-registry-body")!;
-const refreshEvaluation = document.querySelector<HTMLButtonElement>("#refresh-evaluation")!;
 const researchButtons = document.querySelectorAll<HTMLButtonElement>("[data-research-target]");
 
 let stateToken: string | null = null;
@@ -158,7 +162,8 @@ const conditionLabel = (condition?: string | null) => condition ? conditionNames
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
 const showView = (name: string, updateHash = true) => {
-  const target = [...views].some((view) => view.dataset.view === name) ? name : "lab";
+  const requested = name === "evaluation" ? "models" : name;
+  const target = [...views].some((view) => view.dataset.view === requested) ? requested : "lab";
   views.forEach((view) => {
     const active = view.dataset.view === target;
     view.hidden = !active;
@@ -173,7 +178,11 @@ const showView = (name: string, updateHash = true) => {
 
 viewButtons.forEach((button) => button.addEventListener("click", () => showView(button.dataset.viewTarget ?? "lab")));
 const initialView = location.hash.slice(1);
-showView(initialView || "lab", false);
+showView(initialView || "lab", initialView === "evaluation");
+window.addEventListener("hashchange", () => {
+  const requestedView = location.hash.slice(1) || "lab";
+  showView(requestedView, requestedView === "evaluation");
+});
 
 const selectStageButton = (name: string) => stageButtons.forEach((button) => button.classList.toggle("selected", button.dataset.stageTarget === name));
 
@@ -642,6 +651,220 @@ const setRuntimeBadge = (element: HTMLElement, state: "ready" | "failed" | "load
   element.innerHTML = `<i></i>${escapeHtml(label)}`;
 };
 
+type ModelExperience = {
+  slug: "heart" | "diabetes" | "kidney" | "liver" | "pneumonia" | "qwen" | "moonshine";
+  name: string;
+  family: string;
+  category: "screening" | "language" | "imaging";
+  icon: string;
+  accent: string;
+  version: string;
+  summary: string;
+  input: string;
+  output: string;
+  workflow: string[];
+};
+
+const modelExperiences: ModelExperience[] = [
+  { slug: "heart", name: "Heart risk", family: "Cardiovascular research", category: "screening", icon: "cardiology", accent: "coral", version: "ONNX · v2", summary: "A compact tabular pipeline that evaluates reviewed cardiovascular measurements against the UCI Statlog research baseline.", input: "13 clinical measurements", output: "Bounded pattern score", workflow: ["Validate 13 inputs", "Run ONNX pipeline", "Apply versioned threshold", "Attach provenance"] },
+  { slug: "diabetes", name: "Early diabetes signs", family: "Metabolic research", category: "screening", icon: "water_drop", accent: "amber", version: "ONNX · v2", summary: "A symptom-questionnaire model for exploring early-diabetes-associated patterns with explicit human-confirmed evidence.", input: "16 symptom fields", output: "Bounded pattern score", workflow: ["Review symptom evidence", "Encode explicit answers", "Run ONNX pipeline", "Explain limitations"] },
+  { slug: "kidney", name: "Kidney pattern", family: "Renal research", category: "screening", icon: "nephrology", accent: "blue", version: "ONNX · v2", summary: "A laboratory-heavy CKD research workflow with strict completeness checks and explicit missing-value handling.", input: "24 clinical and lab fields", output: "Bounded pattern score", workflow: ["Confirm lab values", "Validate all 24 fields", "Run ONNX pipeline", "Verify result boundary"] },
+  { slug: "liver", name: "Liver pattern", family: "Hepatic research", category: "screening", icon: "gastroenterology", accent: "violet", version: "ONNX · v2", summary: "A compact ILPD baseline that consumes reviewed demographic and laboratory measurements without free-form inference.", input: "10 demographic and lab fields", output: "Bounded pattern score", workflow: ["Review laboratory panel", "Validate measurement range", "Run ONNX pipeline", "Surface cohort limits"] },
+  { slug: "pneumonia", name: "Pneumonia X-ray", family: "Experimental imaging", category: "imaging", icon: "radiology", accent: "cyan", version: "ONNX · v1", summary: "A reproducible PneumoniaMNIST image baseline for pediatric benchmark exploration—not a radiology or adult diagnostic tool.", input: "Reviewed pediatric X-ray", output: "Experimental image score", workflow: ["Confirm image boundary", "Crop and reduce to 28×28", "Run ONNX baseline", "Show imaging limits"] },
+  { slug: "qwen", name: "Qwen3-0.6B / LoRA Lab", family: "Open language reasoner", category: "language", icon: "forum", accent: "mint", version: "Q8 GGUF · hybrid", summary: "The private language layer for conversation and constrained tool proposals. LoRA adapters remain evaluation candidates until they beat the hybrid baseline.", input: "Natural language", output: "Policy-checked JSON proposal", workflow: ["Read user language", "Propose bounded action", "Validate JSON contract", "Use deterministic authority"] },
+  { slug: "moonshine", name: "Moonshine Voice", family: "Open speech model", category: "language", icon: "graphic_eq", accent: "rose", version: "34M · streaming", summary: "A small self-hosted English ASR model that turns a short recording into an editable transcript before the agent sees it.", input: "16 kHz mono audio", output: "Reviewable transcript", workflow: ["Capture short recording", "Transcribe privately", "Review the transcript", "Send confirmed text"] },
+];
+
+let runtimeModelCatalog: ModelSummary[] = [];
+let runtimeTools: ToolSummary[] = [];
+let voiceRuntimeAvailable = false;
+let qwenRuntimeAvailable = false;
+let selectedModelSlug: ModelExperience["slug"] = "heart";
+let activeModelFilter: "all" | ModelExperience["category"] = "all";
+let playgroundStateToken: string | null = null;
+
+const modelExperience = (slug: string) => modelExperiences.find((model) => model.slug === slug);
+const runtimeModel = (slug: string) => runtimeModelCatalog.find((model) => model.slug === slug);
+const runtimeTool = (slug: string) => runtimeTools.find((tool) => tool.slug === `${slug}_risk` || (slug === "pneumonia" && tool.slug === "pneumonia_xray"));
+
+const modelStatus = (model: ModelExperience) => {
+  if (model.slug === "qwen") return qwenRuntimeAvailable ? "Qwen active" : "Rules fallback";
+  if (model.slug === "moonshine") return voiceRuntimeAvailable ? "Voice ready" : "Voice service offline";
+  const tool = runtimeTool(model.slug);
+  if (!runtimeTools.length) return "Checking runtime";
+  return tool?.callable ? (tool.deployment_status === "experimental" ? "Experimental" : "Callable") : "Unavailable";
+};
+
+const renderModelsGallery = () => {
+  const visible = modelExperiences.filter((model) => activeModelFilter === "all" || model.category === activeModelFilter);
+  modelsGallery.innerHTML = visible.map((model, index) => {
+    const evidence = runtimeModel(model.slug);
+    const auroc = evidence?.metrics?.auroc;
+    const metric = typeof auroc === "number" ? `AUROC ${auroc.toFixed(3)}` : model.slug === "qwen" ? "LoRA candidate gated" : model.slug === "moonshine" ? "Transcript review required" : "Runtime evidence";
+    return `<button class="model-experience-card ${model.accent} ${selectedModelSlug === model.slug ? "selected" : ""}" type="button" data-model-select="${model.slug}" style="--delay:${index * 55}ms">
+      <span class="model-card-index">${String(modelExperiences.indexOf(model) + 1).padStart(2, "0")}</span>
+      <span class="model-card-icon material-symbols-outlined">${model.icon}</span>
+      <span class="model-card-status"><i></i>${escapeHtml(modelStatus(model))}</span>
+      <span class="model-card-family">${escapeHtml(model.family)}</span>
+      <strong>${escapeHtml(model.name)}</strong>
+      <p>${escapeHtml(model.summary)}</p>
+      <span class="model-card-meta"><b>${escapeHtml(model.version)}</b><b>${escapeHtml(metric)}</b></span>
+      <span class="model-card-cta">Explore workflow <i class="material-symbols-outlined">arrow_forward</i></span>
+    </button>`;
+  }).join("");
+};
+
+const renderPlaygroundIdentity = (model: ModelExperience) => {
+  const evidence = runtimeModel(model.slug);
+  const auroc = evidence?.metrics?.auroc;
+  playgroundIdentity.className = `playground-identity ${model.accent}`;
+  playgroundIdentity.innerHTML = `<div class="playground-model-mark"><span class="material-symbols-outlined">${model.icon}</span><i></i></div>
+    <span class="playground-kicker">Now exploring · ${escapeHtml(model.family)}</span>
+    <h2>${escapeHtml(model.name)}</h2><p>${escapeHtml(model.summary)}</p>
+    <dl><div><dt>Input</dt><dd>${escapeHtml(model.input)}</dd></div><div><dt>Output</dt><dd>${escapeHtml(model.output)}</dd></div><div><dt>Evidence</dt><dd>${typeof auroc === "number" ? `AUROC ${auroc.toFixed(4)} · frozen test` : escapeHtml(model.version)}</dd></div></dl>
+    <div class="mini-workflow">${model.workflow.map((step, index) => `<span><i>${index + 1}</i>${escapeHtml(step)}</span>`).join("")}</div>`;
+};
+
+const modelLoading = (label: string) => {
+  playgroundStage.innerHTML = `<div class="model-loading"><div class="model-loader-orbit"><span></span><i></i></div><strong>${escapeHtml(label)}</strong><p>Reading the registered schema and model boundary…</p></div>`;
+};
+
+const renderModelForm = (model: ModelExperience, fields: AssessmentField[]) => {
+  playgroundStage.innerHTML = `<div class="playground-head"><div><span>Interactive model run</span><h3>Complete the evidence deck</h3></div><div class="form-level"><span id="model-form-count">0 / ${fields.length}</span><i><b id="model-form-progress"></b></i></div></div>
+    <form class="model-arena-form" id="model-arena-form"><div class="model-arena-fields">${fields.map((field) => renderField(field)).join("")}</div><div class="arena-submit"><label class="consent-check"><input name="consent" type="checkbox" required><span>I reviewed these values and understand this is research—not a diagnosis.</span></label><button class="button models-primary" type="submit">Run ${escapeHtml(model.name)} <span>→</span></button></div></form>`;
+  const form = playgroundStage.querySelector<HTMLFormElement>("#model-arena-form")!;
+  const count = playgroundStage.querySelector<HTMLElement>("#model-form-count")!;
+  const progress = playgroundStage.querySelector<HTMLElement>("#model-form-progress")!;
+  const updateProgress = () => {
+    const complete = [...form.elements].filter((element) => element instanceof HTMLInputElement || element instanceof HTMLSelectElement).filter((element) => element.name !== "consent" && element.value !== "").length;
+    count.textContent = `${complete} / ${fields.length}`;
+    progress.style.width = `${Math.round((complete / fields.length) * 100)}%`;
+  };
+  form.addEventListener("input", updateProgress);
+  form.addEventListener("change", updateProgress);
+  form.addEventListener("submit", (event) => void runPlaygroundPrediction(event, model));
+};
+
+const renderPneumoniaPlayground = (model: ModelExperience) => {
+  playgroundStage.innerHTML = `<div class="playground-head"><div><span>Interactive image run</span><h3>Upload a reviewed research image</h3></div><span class="arena-level-chip">Experimental boundary</span></div>
+    <form class="image-arena" id="image-arena"><label class="image-drop-zone" for="model-xray"><span class="material-symbols-outlined">add_photo_alternate</span><strong>Choose a pediatric chest X-ray</strong><small>JPEG or PNG · maximum 8 MB · the model reduces it to 28×28</small><input id="model-xray" name="image" type="file" accept="image/jpeg,image/png" required></label><div id="model-image-name" class="model-image-name">No image selected</div><label class="consent-check"><input name="consent" type="checkbox" required><span>I confirm the research population and understand this cannot replace a radiologist.</span></label><button class="button models-primary" type="submit">Run image model <span>→</span></button></form>`;
+  const form = playgroundStage.querySelector<HTMLFormElement>("#image-arena")!;
+  const input = playgroundStage.querySelector<HTMLInputElement>("#model-xray")!;
+  const name = playgroundStage.querySelector<HTMLElement>("#model-image-name")!;
+  input.addEventListener("change", () => { name.textContent = input.files?.[0] ? `${input.files[0].name} · ${(input.files[0].size / 1024).toFixed(0)} KB` : "No image selected"; });
+  form.addEventListener("submit", (event) => void runPlaygroundImage(event, model));
+};
+
+const renderQwenPlayground = (model: ModelExperience) => {
+  playgroundStage.innerHTML = `<div class="playground-head"><div><span>Language-model workflow</span><h3>From natural language to a bounded proposal</h3></div><span class="arena-level-chip ${qwenRuntimeAvailable ? "ready" : ""}">${qwenRuntimeAvailable ? "Qwen active" : "Deterministic fallback active"}</span></div>
+    <div class="reasoner-demo"><div class="reasoner-pipeline"><article><i>01</i><span class="material-symbols-outlined">chat</span><strong>Natural language</strong><small>User describes a concern</small></article><b>→</b><article><i>02</i><span class="material-symbols-outlined">data_object</span><strong>Qwen proposal</strong><small>Constrained JSON only</small></article><b>→</b><article><i>03</i><span class="material-symbols-outlined">policy</span><strong>Policy check</strong><small>Deterministic authority</small></article><b>→</b><article><i>04</i><span class="material-symbols-outlined">route</span><strong>Allowed action</strong><small>Respond, ask or route</small></article></div>
+    <div class="adapter-note"><span class="material-symbols-outlined">experiment</span><div><strong>Fine-tuning is visible, but not silently promoted.</strong><p>The LoRA track improves contract learning through versioned examples. Current adapters remain candidates because direct-routing accuracy has not beaten the tested hybrid.</p></div></div>
+    <label class="reasoner-prompt"><span>Try a natural-language concern</span><textarea id="qwen-model-prompt" rows="3">I have been unusually thirsty and urinating often. Which research workflow fits?</textarea></label><button class="button models-primary" type="button" id="open-qwen-agent">Continue in live agent <span>→</span></button></div>`;
+  playgroundStage.querySelector<HTMLButtonElement>("#open-qwen-agent")!.addEventListener("click", () => {
+    const prompt = playgroundStage.querySelector<HTMLTextAreaElement>("#qwen-model-prompt")!.value.trim();
+    showView("assessment");
+    messageInput.value = prompt;
+    messageInput.focus();
+  });
+};
+
+const renderMoonshinePlayground = (model: ModelExperience) => {
+  playgroundStage.innerHTML = `<div class="playground-head"><div><span>Speech-model workflow</span><h3>Experience private medical voice AI</h3></div><span class="arena-level-chip ${voiceRuntimeAvailable ? "ready" : ""}">${voiceRuntimeAvailable ? "Moonshine ready" : "Voice runtime offline"}</span></div>
+    <div class="voice-model-demo"><div class="voice-demo-orb"><span class="material-symbols-outlined">graphic_eq</span>${Array.from({length: 18}, (_, index) => `<i style="--bar:${index}"></i>`).join("")}</div><h4>34 million parameters. One focused job.</h4><p>Moonshine transcribes a short English recording inside the controlled runtime. The transcript always returns to the composer for human review before orchestration.</p><div class="voice-demo-path"><span><i>1</i>Speak</span><b></b><span><i>2</i>Transcribe privately</span><b></b><span><i>3</i>Review text</span><b></b><span><i>4</i>Send</span></div><button class="button models-primary" type="button" id="open-voice-agent" ${voiceRuntimeAvailable ? "" : "disabled"}>${voiceRuntimeAvailable ? "Open voice experience" : "Voice service is offline"} <span>→</span></button></div>`;
+  playgroundStage.querySelector<HTMLButtonElement>("#open-voice-agent")!.addEventListener("click", () => {
+    showView("assessment");
+    voiceButton.classList.add("spotlight");
+    voiceButton.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => voiceButton.classList.remove("spotlight"), 2400);
+  });
+};
+
+const selectModelExperience = async (slug: string, scroll = true) => {
+  const model = modelExperience(slug);
+  if (!model) return;
+  selectedModelSlug = model.slug;
+  renderModelsGallery();
+  renderPlaygroundIdentity(model);
+  if (scroll) document.querySelector("#model-playground")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (model.slug === "qwen") { renderQwenPlayground(model); return; }
+  if (model.slug === "moonshine") { renderMoonshinePlayground(model); return; }
+  if (model.slug === "pneumonia") { renderPneumoniaPlayground(model); return; }
+  modelLoading(`Loading ${model.name}`);
+  try {
+    const response = await fetch(`${apiBase}/api/v1/triage/start`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ message: `I want to run the ${model.slug} research screening.`, locale: "en" }) });
+    if (!response.ok) throw new Error(await apiError(response));
+    const result = await response.json() as TriageResponse;
+    if (selectedModelSlug !== model.slug) return;
+    playgroundStateToken = result.state_token;
+    if (result.status !== "ready" || !result.required_fields.length) throw new Error("The registered model schema was not returned.");
+    renderModelForm(model, result.required_fields);
+  } catch (error) {
+    playgroundStage.innerHTML = `<div class="arena-error"><span class="material-symbols-outlined">error</span><h3>Model workflow unavailable</h3><p>${escapeHtml(error instanceof Error ? error.message : "The model could not be loaded.")}</p><button class="button secondary" type="button" id="retry-model">Try again</button></div>`;
+    playgroundStage.querySelector<HTMLButtonElement>("#retry-model")?.addEventListener("click", () => void selectModelExperience(model.slug, false));
+  }
+};
+
+const renderModelThinking = (model: ModelExperience) => {
+  playgroundStage.innerHTML = `<div class="model-thinking"><div class="inference-core"><span class="material-symbols-outlined">${model.icon}</span><i></i><b></b></div><span class="thinking-kicker">Running ${escapeHtml(model.name)}</span><h3>Following the evidence trail…</h3><div class="inference-steps"><span class="active"><i>✓</i>Inputs validated</span><span><i></i>Model inference</span><span><i></i>Threshold policy</span><span><i></i>Result provenance</span></div><small>No generated clinical values · no external AI API</small></div>`;
+};
+
+const renderPlaygroundResult = (model: ModelExperience, result: Prediction) => {
+  const score = result.probability === null ? 0 : Math.round(result.probability * 100);
+  const elevated = result.band === "elevated";
+  playgroundStage.innerHTML = `<div class="arena-result ${result.band}">${Array.from({length: 14}, (_, index) => `<i class="result-spark" style="--spark:${index}"></i>`).join("")}<div class="result-score-ring" style="--score:${score}"><div><strong>${result.probability === null ? "—" : `${score}%`}</strong><small>model score</small></div></div><div class="arena-result-copy"><span class="result-unlocked"><i class="material-symbols-outlined">verified</i> Research result unlocked</span><h3>${elevated ? "Elevated pattern identified" : "No elevated pattern identified"}</h3><p>This model output can be wrong and does not establish or rule out a condition. Review its dataset boundary before interpreting the score.</p><div class="result-provenance"><span><small>Model</small><strong>${escapeHtml(result.model_version)}</strong></span><span><small>Status</small><strong>${escapeHtml(result.validation_status)}</strong></span><span><small>Pipeline</small><strong>Verified ONNX</strong></span></div><div class="arena-result-actions"><button class="button models-primary" type="button" data-model-export="pdf">Download PDF</button><button class="button secondary" type="button" data-model-export="xlsx">Download Excel</button><button class="model-run-again" type="button">Run again ↻</button></div></div></div>`;
+  playgroundStage.querySelectorAll<HTMLButtonElement>("[data-model-export]").forEach((button) => button.addEventListener("click", () => void downloadReport(button.dataset.modelExport!)));
+  playgroundStage.querySelector<HTMLButtonElement>(".model-run-again")!.addEventListener("click", () => void selectModelExperience(model.slug, false));
+};
+
+async function runPlaygroundPrediction(event: SubmitEvent, model: ModelExperience) {
+  event.preventDefault();
+  const form = event.currentTarget as HTMLFormElement;
+  const inputs: Record<string, number> = {};
+  for (const [name, value] of new FormData(form).entries()) if (name !== "consent") inputs[name] = Number(value);
+  renderModelThinking(model);
+  try {
+    const [response] = await Promise.all([fetch(`${apiBase}/api/v1/assessments/${model.slug}/predict`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ inputs, state_token: playgroundStateToken }) }), new Promise((resolve) => window.setTimeout(resolve, 1400))]);
+    if (!response.ok) throw new Error(await apiError(response));
+    const result = await response.json() as Prediction;
+    reportToken = result.report_token;
+    renderPlaygroundResult(model, result);
+  } catch (error) {
+    playgroundStage.innerHTML = `<div class="arena-error"><span class="material-symbols-outlined">error</span><h3>The research model could not run</h3><p>${escapeHtml(error instanceof Error ? error.message : "Please review the inputs and try again.")}</p><button class="button secondary" type="button" id="retry-model">Return to inputs</button></div>`;
+    playgroundStage.querySelector<HTMLButtonElement>("#retry-model")!.addEventListener("click", () => void selectModelExperience(model.slug, false));
+  }
+}
+
+async function runPlaygroundImage(event: SubmitEvent, model: ModelExperience) {
+  event.preventDefault();
+  const form = event.currentTarget as HTMLFormElement;
+  const file = form.querySelector<HTMLInputElement>("input[type=file]")!.files?.[0];
+  if (!file) return;
+  if (!["image/jpeg", "image/png"].includes(file.type) || file.size > 8 * 1024 * 1024) {
+    playgroundStage.querySelector<HTMLElement>(".model-image-name")!.textContent = "Use a JPEG or PNG smaller than 8 MB.";
+    return;
+  }
+  renderModelThinking(model);
+  const body = new FormData(); body.append("image", file);
+  try {
+    const [response] = await Promise.all([fetch(`${apiBase}/api/v1/images/pneumonia/predict`, { method: "POST", body, credentials: "include" }), new Promise((resolve) => window.setTimeout(resolve, 1400))]);
+    if (!response.ok) throw new Error(await apiError(response));
+    const result = await response.json() as Prediction;
+    reportToken = result.report_token;
+    renderPlaygroundResult(model, result);
+  } catch (error) {
+    playgroundStage.innerHTML = `<div class="arena-error"><span class="material-symbols-outlined">error</span><h3>The image model could not run</h3><p>${escapeHtml(error instanceof Error ? error.message : "Please review the image and try again.")}</p><button class="button secondary" type="button" id="retry-model">Return to upload</button></div>`;
+    playgroundStage.querySelector<HTMLButtonElement>("#retry-model")!.addEventListener("click", () => renderPneumoniaPlayground(model));
+  }
+}
+
+modelsGallery.addEventListener("click", (event) => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-model-select]");
+  if (button?.dataset.modelSelect) void selectModelExperience(button.dataset.modelSelect);
+});
+document.querySelectorAll<HTMLButtonElement>(".model-constellation [data-model-select]").forEach((button) => button.addEventListener("click", () => { showView("models"); void selectModelExperience(button.dataset.modelSelect ?? "heart"); }));
+modelFilterButtons.forEach((button) => button.addEventListener("click", () => { activeModelFilter = (button.dataset.modelFilter ?? "all") as typeof activeModelFilter; modelFilterButtons.forEach((item) => item.classList.toggle("active", item === button)); renderModelsGallery(); }));
+exploreModels.addEventListener("click", () => document.querySelector("#models-catalog")?.scrollIntoView({ behavior: "smooth" }));
+
 const renderRegistry = (models: ModelSummary[], tools: ToolSummary[], voiceAvailable: boolean, qwenAvailable: boolean) => {
   const toolRows = tools.map((tool) => {
     const architecture = tool.kind === "predictive_model" ? "Specialist model" : tool.kind === "retrieval" ? "Bounded reasoner" : tool.kind;
@@ -658,9 +881,9 @@ const renderRegistry = (models: ModelSummary[], tools: ToolSummary[], voiceAvail
 };
 
 const loadRuntimeEvidence = async () => {
-  setRuntimeBadge(evaluationRuntime, "loading", "Checking local runtime");
+  setRuntimeBadge(modelsRuntime, "loading", "Checking local runtime");
   setRuntimeBadge(registryRuntime, "loading", "Loading registry");
-  refreshEvaluation.disabled = true;
+  refreshModels.disabled = true;
   try {
     const [healthResponse, modelsResponse, toolsResponse] = await Promise.all([
       fetch(`${apiBase}/health`),
@@ -674,15 +897,22 @@ const loadRuntimeEvidence = async () => {
     const models = payload.models ?? [];
     const tools = toolPayload.tools ?? [];
     const callable = tools.filter((tool) => tool.callable);
+    runtimeModelCatalog = models;
+    runtimeTools = tools;
+    voiceRuntimeAvailable = Boolean(health.voice_available);
+    qwenRuntimeAvailable = Boolean(health.qwen_available);
     for (const model of models) {
       const badge = document.querySelector<HTMLElement>(`[data-model-status="${model.slug}"]`);
       if (!badge) continue;
       badge.textContent = model.status === "research" ? "Research model" : model.status;
       badge.classList.toggle("available", model.status === "research" || model.status === "validated");
     }
-    liveToolCount.textContent = String(callable.length);
     renderRegistry(models, tools, Boolean(health.voice_available), Boolean(health.qwen_available));
-    setRuntimeBadge(evaluationRuntime, "ready", `${callable.length} tools registered locally`);
+    renderModelsGallery();
+    renderPlaygroundIdentity(modelExperience(selectedModelSlug)!);
+    if (selectedModelSlug === "qwen") renderQwenPlayground(modelExperience("qwen")!);
+    if (selectedModelSlug === "moonshine") renderMoonshinePlayground(modelExperience("moonshine")!);
+    setRuntimeBadge(modelsRuntime, "ready", `${callable.length} callable tools · private runtime`);
     setRuntimeBadge(registryRuntime, "ready", `${tools.length} registered · ${callable.length} callable`);
     if (health.voice_available) {
       setVoiceButtonState("ready");
@@ -693,17 +923,17 @@ const loadRuntimeEvidence = async () => {
       composerStatus.textContent = `${locale.value === "hi" ? "हिन्दी" : "English"} · text input`;
     }
   } catch {
-    setRuntimeBadge(evaluationRuntime, "failed", "Local runtime unavailable");
+    setRuntimeBadge(modelsRuntime, "failed", "Local runtime unavailable");
     setRuntimeBadge(registryRuntime, "failed", "Registry unavailable");
-    liveToolCount.textContent = "—";
+    renderModelsGallery();
     setVoiceButtonState("unavailable");
     voiceButton.setAttribute("aria-label", "Medical voice AI is unavailable because the local API did not respond");
   } finally {
-    refreshEvaluation.disabled = false;
+    refreshModels.disabled = false;
   }
 };
 
-refreshEvaluation.addEventListener("click", loadRuntimeEvidence);
+refreshModels.addEventListener("click", loadRuntimeEvidence);
 const restoreSession = () => {
   try {
     const restored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") as PersistedSession | null;
@@ -727,4 +957,6 @@ const restoreSession = () => {
 };
 
 restoreSession();
+renderModelsGallery();
+void selectModelExperience("heart", false);
 void loadRuntimeEvidence();

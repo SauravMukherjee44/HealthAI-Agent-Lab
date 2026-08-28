@@ -21,7 +21,7 @@
       <nav class="primary-nav" aria-label="Primary navigation">
         <button class="active" type="button" data-view-target="lab">Lab</button>
         <button type="button" data-view-target="assessment">Assessment</button>
-        <button type="button" data-view-target="evaluation">Evaluation</button>
+        <button type="button" data-view-target="models">Models</button>
         <button type="button" data-view-target="research">Research</button>
         <button type="button" data-view-target="safety">Safety</button>
       </nav>
@@ -139,20 +139,41 @@
         </aside>
       </section>
 
-      <section class="app-view dashboard-view" data-view="evaluation" hidden>
-        <div class="page-shell">
-          <header class="page-title"><div><span class="section-kicker">Transparent evaluation</span><h1>Evidence, not accuracy theatre.</h1><p>Every number names its environment and boundary. Live capability status comes from the running build; benchmark evidence remains separate from operational readiness.</p></div><div class="page-actions"><span class="runtime-badge" id="evaluation-runtime"><i></i> Checking local runtime</span><button class="button secondary" type="button" id="refresh-evaluation">Refresh evidence</button></div></header>
-          <div class="kpi-grid">
-            <article class="clinical-card"><small>Automated checks</small><strong>15 / 15</strong><span class="positive">Last local test run</span></article>
-            <article class="clinical-card accent-top"><small>Voice cold path</small><strong>1.08s</strong><span class="positive">5.05s medical sample</span></article>
-            <article class="clinical-card"><small>Callable tools</small><strong id="live-tool-count">2</strong><span>Registry enforced</span></article>
-            <article class="clinical-card"><small>External AI APIs</small><strong>0</strong><span>Self-hosted inference</span></article>
+      <section class="app-view models-view" data-view="models" hidden>
+        <div class="models-hero">
+          <div class="models-hero-copy">
+            <span class="models-overline"><i></i> Open-weight model playground</span>
+            <h1>Meet the intelligence<br />behind <em>HealthAI.</em></h1>
+            <p>Explore every model, follow its evidence path and run the same bounded research workflows used by the live agent. No external AI API sits behind the experience.</p>
+            <div class="models-hero-actions"><button class="button models-primary" type="button" id="explore-models">Explore the model lab <span>↓</span></button><span class="runtime-badge models-runtime" id="models-runtime"><i></i> Checking local runtime</span></div>
+            <div class="model-proof"><span><strong>7</strong><small>Model experiences</small></span><span><strong>3</strong><small>Inference modalities</small></span><span><strong>0</strong><small>External AI APIs</small></span></div>
           </div>
-          <div class="dashboard-grid">
-            <section class="clinical-card table-panel"><div class="panel-head"><div><h2>Speech evidence</h2><p>One reproducible smoke sample—not a clinical WER benchmark.</p></div><span class="status-chip success">Measured locally</span></div><div class="table-scroll"><table><thead><tr><th>Model</th><th>Architecture</th><th>Observed result</th><th>Cold path</th><th>Decision</th></tr></thead><tbody><tr><td><strong>Moonshine Tiny Streaming</strong></td><td>34M · ARM64 CPU</td><td>Medical key terms retained in a 5.05s synthetic sample</td><td>1.08s</td><td><span class="status-chip success">Selected</span></td></tr><tr><td>Nemotron ASR</td><td>Large CPU image</td><td>Build path exceeded the cost envelope</td><td>Not accepted</td><td><span class="status-chip">Removed</span></td></tr><tr><td>Whisper</td><td>Baseline candidate</td><td>No project benchmark yet</td><td>Not measured</td><td><span class="status-chip">Evaluation backlog</span></td></tr></tbody></table></div></section>
-            <aside class="clinical-card registry-links"><div class="panel-head"><div><h2>Activation gates</h2><p>All four must pass before a tool is callable.</p></div></div><ol><li><span>01</span><div><strong>Data provenance</strong><small>Source, license and population recorded</small></div></li><li><span>02</span><div><strong>Held-out evaluation</strong><small>Discrimination, calibration and error analysis</small></div></li><li><span>03</span><div><strong>Safety scenarios</strong><small>Emergency pre-emption and invalid inputs tested</small></div></li><li><span>04</span><div><strong>Runtime evidence</strong><small>Latency, memory, failure mode and cost captured</small></div></li></ol></aside>
+          <div class="model-constellation" aria-label="HealthAI model system">
+            <div class="constellation-core"><span class="material-symbols-outlined">neurology</span><b>HealthAI</b><small>policy core</small></div>
+            <span class="orbit orbit-one"></span><span class="orbit orbit-two"></span>
+            <button type="button" data-model-select="qwen" class="constellation-node node-qwen"><i class="material-symbols-outlined">forum</i><span>Qwen</span></button>
+            <button type="button" data-model-select="moonshine" class="constellation-node node-voice"><i class="material-symbols-outlined">graphic_eq</i><span>Moonshine</span></button>
+            <button type="button" data-model-select="heart" class="constellation-node node-heart"><i class="material-symbols-outlined">cardiology</i><span>Heart</span></button>
+            <button type="button" data-model-select="diabetes" class="constellation-node node-diabetes"><i class="material-symbols-outlined">water_drop</i><span>Diabetes</span></button>
+            <button type="button" data-model-select="pneumonia" class="constellation-node node-image"><i class="material-symbols-outlined">radiology</i><span>Imaging</span></button>
           </div>
-          <section class="evaluation-notes"><article><span class="material-symbols-outlined">analytics</span><div><strong>Model quality</strong><p>AUROC is not a diagnosis. Calibration, subgroup behavior and dataset shift matter before any clinical claim.</p></div></article><article><span class="material-symbols-outlined">speed</span><div><strong>System quality</strong><p>Routing accuracy, emergency recall, latency and report provenance are evaluated independently.</p></div></article><article><span class="material-symbols-outlined">receipt_long</span><div><strong>Reproducibility</strong><p>Versioned artifacts and explicit input schemas make every result auditable.</p></div></article></section>
+        </div>
+
+        <div class="page-shell models-shell" id="models-catalog">
+          <header class="models-section-head"><div><span class="section-kicker">Choose a model</span><h2>Seven models. One controlled system.</h2><p>Each model has one job, an explicit input boundary and a visible evaluation status.</p></div><button class="button secondary" type="button" id="refresh-models"><span class="material-symbols-outlined">refresh</span> Refresh runtime</button></header>
+          <div class="model-filters" role="group" aria-label="Filter models"><button class="active" type="button" data-model-filter="all">All models <span>7</span></button><button type="button" data-model-filter="screening">Research screening <span>4</span></button><button type="button" data-model-filter="language">Language &amp; voice <span>2</span></button><button type="button" data-model-filter="imaging">Imaging <span>1</span></button></div>
+          <div class="models-gallery" id="models-gallery" aria-live="polite"></div>
+
+          <section class="model-playground" id="model-playground" aria-live="polite">
+            <aside class="playground-identity" id="playground-identity"></aside>
+            <div class="playground-stage" id="playground-stage"><div class="model-loading"><span></span><p>Selecting model workflow…</p></div></div>
+          </section>
+
+          <section class="model-boundary-grid">
+            <article><span class="material-symbols-outlined">lock</span><div><strong>Private inference</strong><p>Prompts, audio and measurements stay inside the controlled runtime.</p></div></article>
+            <article><span class="material-symbols-outlined">account_tree</span><div><strong>Specialists over one giant model</strong><p>Language, speech and numerical screening remain independently testable.</p></div></article>
+            <article><span class="material-symbols-outlined">fact_check</span><div><strong>Evaluation before activation</strong><p>A model is callable only when its artifact, schema and limitations are registered.</p></div></article>
+          </section>
         </div>
       </section>
 
