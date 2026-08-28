@@ -1,0 +1,16 @@
+.git
+.github
+.agent-venv
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+node_modules
+frontend/node_modules
+backend/data
+.aws-sam
+.env
+*.DS_Store

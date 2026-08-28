@@ -1,0 +1,22 @@
+FROM amazon/aws-lambda-python:3.12
+
+COPY backend/requirements.txt ${LAMBDA_TASK_ROOT}/requirements.txt
+RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt \
+    && pip install --no-cache-dir moonshine-voice==0.1.5
+
+# Bundle the current English Tiny Streaming model into the immutable image.
+# Architecture 2 is Tiny Streaming (34M), which supports runtime key-term biasing.
+ENV MOONSHINE_VOICE_CACHE=/opt/moonshine-cache
+RUN moonshine-voice download --stt --language en --model-arch 2 \
+    && test -s /opt/moonshine-cache/download.moonshine.ai/model/tiny-streaming-en/quantized_26_08_21/encoder.ort \
+    && test -s /opt/moonshine-cache/download.moonshine.ai/model/tiny-streaming-en/quantized_26_08_21/decoder_kv.ort
+
+COPY backend/app ${LAMBDA_TASK_ROOT}/app
+COPY backend/artifacts ${LAMBDA_TASK_ROOT}/artifacts
+
+ENV HEALTHAI_ARTIFACTS_DIR=${LAMBDA_TASK_ROOT}/artifacts \
+    HEALTHAI_VOICE_ENABLED=true \
+    HEALTHAI_MOONSHINE_CACHE_DIR=/opt/moonshine-cache \
+    HEALTHAI_MOONSHINE_MODEL_ARCH=2
+
+CMD ["app.main.handler"]

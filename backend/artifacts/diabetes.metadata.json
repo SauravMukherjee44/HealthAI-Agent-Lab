@@ -1,0 +1,84 @@
+{
+  "slug": "diabetes",
+  "version": "diabetes-uci-candidate-selected-v2",
+  "generated_at": "2026-08-27T09:41:01.999751+00:00",
+  "validation_status": "research",
+  "feature_order": [
+    "age",
+    "gender",
+    "polyuria",
+    "polydipsia",
+    "sudden_weight_loss",
+    "weakness",
+    "polyphagia",
+    "genital_thrush",
+    "visual_blurring",
+    "itching",
+    "irritability",
+    "delayed_healing",
+    "partial_paresis",
+    "muscle_stiffness",
+    "alopecia",
+    "obesity"
+  ],
+  "threshold": 0.55,
+  "metrics": {
+    "auroc": 0.9965,
+    "auprc": 0.9978,
+    "sensitivity": 0.9375,
+    "specificity": 0.975,
+    "ppv": 0.9836,
+    "npv": 0.907,
+    "brier": 0.0272,
+    "test_samples": 104
+  },
+  "model_selection": {
+    "selected": "rbf_support_vector_machine",
+    "selection_set": "validation-only",
+    "candidates": {
+      "regularized_logistic_regression": {
+        "threshold": 0.115,
+        "metrics": {
+          "auroc": 0.9258,
+          "auprc": 0.9599,
+          "sensitivity": 0.9062,
+          "specificity": 0.825,
+          "ppv": 0.8923,
+          "npv": 0.8462,
+          "brier": 0.1169,
+          "test_samples": 104
+        }
+      },
+      "rbf_support_vector_machine": {
+        "threshold": 0.55,
+        "metrics": {
+          "auroc": 0.991,
+          "auprc": 0.9944,
+          "sensitivity": 0.9062,
+          "specificity": 0.95,
+          "ppv": 0.9667,
+          "npv": 0.8636,
+          "brier": 0.0457,
+          "test_samples": 104
+        }
+      }
+    }
+  },
+  "dataset": {
+    "name": "UCI Early Stage Diabetes Risk Prediction",
+    "doi": "10.24432/C5VG8H",
+    "license": "CC BY 4.0",
+    "instances": 520
+  },
+  "limitations": [
+    "The questionnaire dataset contains 520 participants from a single hospital in Bangladesh.",
+    "Symptoms overlap with many other conditions and cannot establish a diabetes diagnosis.",
+    "Performance has not been established prospectively or in an external Indian cohort."
+  ],
+  "split": {
+    "train": 312,
+    "validation": 104,
+    "test": 104,
+    "random_state": 44
+  }
+}

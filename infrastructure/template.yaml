@@ -1,0 +1,222 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: HealthAI Agent Lab serverless research deployment (API Gateway delivery)
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, production]
+  StateSecret:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+  AllowedOrigin:
+    Type: String
+    Default: "*"
+
+Globals:
+  Function:
+    MemorySize: 2048
+    Timeout: 30
+    Tracing: Active
+    Environment:
+      Variables:
+        HEALTHAI_ENVIRONMENT: !Ref Environment
+        HEALTHAI_STATE_SECRET: !Ref StateSecret
+        HEALTHAI_ALLOWED_ORIGINS: !Ref AllowedOrigin
+        HEALTHAI_ARTIFACTS_DIR: /var/task/artifacts
+        HEALTHAI_QUOTA_TABLE: !Ref QuotaTable
+        HEALTHAI_AUDIO_BUCKET: !Ref TemporaryAudioBucket
+        HEALTHAI_ASR_QUEUE_URL: !Ref AsrQueue
+        HEALTHAI_RATE_LIMIT_ENABLED: "true"
+
+Resources:
+  HealthApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins: [!Ref AllowedOrigin]
+        AllowHeaders: [Content-Type]
+        AllowMethods: [GET, POST]
+        MaxAge: 600
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      Dockerfile: backend/Dockerfile
+      DockerContext: ..
+      DockerTag: healthai-api
+    Properties:
+      FunctionName: !Sub healthai-${Environment}-api-x86
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          HEALTHAI_VOICE_ENABLED: "true"
+          HEALTHAI_ORCHESTRATOR_BACKEND: auto
+          HEALTHAI_QWEN_LAMBDA_FUNCTION: !Ref QwenFunction
+      LoggingConfig:
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
+        LogGroup: !Ref ApiLogGroup
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref QuotaTable
+        - S3CrudPolicy:
+            BucketName: !Ref TemporaryAudioBucket
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt AsrQueue.QueueName
+        - LambdaInvokePolicy:
+            FunctionName: !Ref QwenFunction
+      Events:
+        Root:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HealthApi
+            Path: /
+            Method: ANY
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HealthApi
+            Path: /{proxy+}
+            Method: ANY
+
+  QwenFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      Dockerfile: backend/Dockerfile.qwen
+      DockerContext: ..
+      DockerTag: healthai-qwen
+    Properties:
+      FunctionName: !Sub healthai-${Environment}-qwen-x86
+      PackageType: Image
+      Architectures:
+        - x86_64
+      MemorySize: 3008
+      # The model is scale-to-zero. Its first invocation can spend ~25 seconds
+      # loading the GGUF before inference; subsequent warm calls are much faster.
+      Timeout: 120
+      Environment:
+        Variables:
+          HEALTHAI_QWEN_MODEL_PATH: /opt/qwen/Qwen3-0.6B-Q8_0.gguf
+          HEALTHAI_QWEN_THREADS: "2"
+      LoggingConfig:
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
+        LogGroup: !Ref QwenLogGroup
+
+  VoiceFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      Dockerfile: backend/Dockerfile.voice
+      DockerContext: ..
+      DockerTag: healthai-voice
+    Properties:
+      FunctionName: !Sub healthai-${Environment}-voice-x86
+      PackageType: Image
+      Architectures:
+        - x86_64
+      MemorySize: 3008
+      Timeout: 28
+      Environment:
+        Variables:
+          HEALTHAI_VOICE_ENABLED: "true"
+          HEALTHAI_MOONSHINE_CACHE_DIR: /opt/moonshine-cache
+          HEALTHAI_MOONSHINE_MODEL_ARCH: "2"
+      LoggingConfig:
+        LogFormat: JSON
+        ApplicationLogLevel: INFO
+        SystemLogLevel: WARN
+        LogGroup: !Ref VoiceLogGroup
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref QuotaTable
+      Events:
+        Transcribe:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HealthApi
+            Path: /api/v1/voice/transcribe
+            Method: POST
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/healthai/${Environment}/api
+      RetentionInDays: 14
+
+  VoiceLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/healthai/${Environment}/voice
+      RetentionInDays: 7
+
+  QwenLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/healthai/${Environment}/qwen
+      RetentionInDays: 7
+
+  TemporaryAudioBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteTemporaryHealthAudio
+            Status: Enabled
+            ExpirationInDays: 1
+
+  AsrDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      MessageRetentionPeriod: 1209600
+      SqsManagedSseEnabled: true
+
+  AsrQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 180
+      MessageRetentionPeriod: 3600
+      SqsManagedSseEnabled: true
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AsrDeadLetterQueue.Arn
+        maxReceiveCount: 2
+
+  QuotaTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      SSESpecification:
+        SSEEnabled: true
+
+Outputs:
+  ApiUrl:
+    Value: !Sub "https://${HealthApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
+  SiteUrl:
+    Value: !Sub "https://${HealthApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}"
+  QwenFunctionName:
+    Value: !Ref QwenFunction

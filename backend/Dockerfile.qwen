@@ -1,0 +1,20 @@
+FROM amazon/aws-lambda-python:3.12
+
+RUN dnf install -y libgomp && dnf clean all \
+    && pip install --no-cache-dir --only-binary=:all: \
+      --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu \
+      llama-cpp-python==0.3.35
+
+RUN mkdir -p /opt/qwen \
+    && curl --fail --location --retry 3 \
+      https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/resolve/main/Qwen3-0.6B-Q8_0.gguf \
+      --output /opt/qwen/Qwen3-0.6B-Q8_0.gguf \
+    && echo "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031  /opt/qwen/Qwen3-0.6B-Q8_0.gguf" \
+      | sha256sum --check
+
+COPY backend/app ${LAMBDA_TASK_ROOT}/app
+
+ENV HEALTHAI_QWEN_MODEL_PATH=/opt/qwen/Qwen3-0.6B-Q8_0.gguf \
+    HEALTHAI_QWEN_THREADS=2
+
+CMD ["app.qwen_lambda.handler"]

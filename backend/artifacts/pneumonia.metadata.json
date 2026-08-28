@@ -1,0 +1,88 @@
+{
+  "slug": "pneumonia",
+  "version": "pneumoniamnist-logistic-v1",
+  "generated_at": "2026-08-27T10:44:09.190134+00:00",
+  "validation_status": "research",
+  "feature_order": [
+    "28x28_grayscale_pixels"
+  ],
+  "image_size": [
+    28,
+    28
+  ],
+  "threshold": 0.75,
+  "metrics": {
+    "auroc": 0.9267,
+    "auprc": 0.9264,
+    "sensitivity": 0.9359,
+    "specificity": 0.7949,
+    "ppv": 0.8838,
+    "npv": 0.8815,
+    "brier": 0.1029,
+    "test_samples": 624
+  },
+  "model_selection": {
+    "selected": "logistic_c_1",
+    "selection_set": "official-validation-only",
+    "candidates": {
+      "logistic_c_0.01": {
+        "threshold": 0.545,
+        "metrics": {
+          "auroc": 0.9822,
+          "auprc": 0.9937,
+          "sensitivity": 0.9049,
+          "specificity": 0.9407,
+          "ppv": 0.9778,
+          "npv": 0.7744,
+          "brier": 0.0599,
+          "test_samples": 524
+        }
+      },
+      "logistic_c_0.1": {
+        "threshold": 0.635,
+        "metrics": {
+          "auroc": 0.9884,
+          "auprc": 0.996,
+          "sensitivity": 0.9023,
+          "specificity": 0.9704,
+          "ppv": 0.9887,
+          "npv": 0.7751,
+          "brier": 0.0439,
+          "test_samples": 524
+        }
+      },
+      "logistic_c_1": {
+        "threshold": 0.75,
+        "metrics": {
+          "auroc": 0.9912,
+          "auprc": 0.997,
+          "sensitivity": 0.9023,
+          "specificity": 0.9852,
+          "ppv": 0.9943,
+          "npv": 0.7778,
+          "brier": 0.0368,
+          "test_samples": 524
+        }
+      }
+    }
+  },
+  "dataset": {
+    "name": "MedMNIST v2 PneumoniaMNIST",
+    "doi": "10.5281/zenodo.10519652",
+    "license": "CC BY 4.0",
+    "instances": 5856,
+    "split": {
+      "train": 4708,
+      "validation": 524,
+      "test": 624
+    }
+  },
+  "limitations": [
+    "The benchmark contains pediatric chest X-rays and must not be generalized to adults.",
+    "Images are center-cropped and reduced to 28\u00d728 pixels, discarding clinically important detail.",
+    "The source test split may share acquisition characteristics with training data.",
+    "The service relies on user confirmation that the upload is a pediatric chest X-ray; it has no independent modality detector.",
+    "The model cannot identify alternative diagnoses and cannot replace radiologist interpretation.",
+    "Performance has not been established prospectively or on an external hospital cohort."
+  ]
+}

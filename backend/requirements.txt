@@ -1,0 +1,12 @@
+fastapi==0.116.1
+mangum==0.19.0
+pydantic==2.11.7
+pydantic-settings==2.10.1
+python-multipart==0.0.20
+cryptography==45.0.6
+numpy==2.2.6
+onnxruntime==1.22.1
+reportlab==4.4.3
+XlsxWriter==3.2.5
+boto3==1.40.18
+Pillow==12.3.0

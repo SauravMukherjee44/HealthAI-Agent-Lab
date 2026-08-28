@@ -1,0 +1,79 @@
+{
+  "slug": "liver",
+  "version": "liver-uci-candidate-selected-v2",
+  "generated_at": "2026-08-27T09:41:07.350597+00:00",
+  "validation_status": "research",
+  "feature_order": [
+    "age",
+    "gender",
+    "total_bilirubin",
+    "direct_bilirubin",
+    "alkaline_phosphatase",
+    "alanine_aminotransferase",
+    "aspartate_aminotransferase",
+    "total_proteins",
+    "albumin",
+    "albumin_globulin_ratio"
+  ],
+  "threshold": 0.325,
+  "metrics": {
+    "auroc": 0.7548,
+    "auprc": 0.888,
+    "sensitivity": 0.8675,
+    "specificity": 0.3824,
+    "ppv": 0.7742,
+    "npv": 0.5417,
+    "brier": 0.2022,
+    "test_samples": 117
+  },
+  "model_selection": {
+    "selected": "regularized_logistic_regression",
+    "selection_set": "validation-only",
+    "candidates": {
+      "regularized_logistic_regression": {
+        "threshold": 0.325,
+        "metrics": {
+          "auroc": 0.8038,
+          "auprc": 0.9252,
+          "sensitivity": 0.9048,
+          "specificity": 0.303,
+          "ppv": 0.7677,
+          "npv": 0.5556,
+          "brier": 0.1865,
+          "test_samples": 117
+        }
+      },
+      "rbf_support_vector_machine": {
+        "threshold": 0.54,
+        "metrics": {
+          "auroc": 0.7372,
+          "auprc": 0.8998,
+          "sensitivity": 0.9048,
+          "specificity": 0.1818,
+          "ppv": 0.7379,
+          "npv": 0.4286,
+          "brier": 0.1746,
+          "test_samples": 117
+        }
+      }
+    }
+  },
+  "dataset": {
+    "name": "UCI ILPD (Indian Liver Patient Dataset)",
+    "doi": "10.24432/C5D02C",
+    "license": "CC BY 4.0",
+    "instances": 583
+  },
+  "limitations": [
+    "The dataset contains 583 historical records from north-east Andhra Pradesh and is not nationally representative.",
+    "The cohort is sex-imbalanced (441 male and 142 female records), and published work has identified sex-related performance concerns.",
+    "The inputs are laboratory measurements that require professional collection and interpretation.",
+    "Performance has not been established prospectively or in an external clinical cohort."
+  ],
+  "split": {
+    "train": 349,
+    "validation": 117,
+    "test": 117,
+    "random_state": 44
+  }
+}

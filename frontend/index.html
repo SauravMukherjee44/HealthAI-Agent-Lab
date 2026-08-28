@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en" class="theme-healthai">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#06251f" />
+    <meta name="description" content="A transparent, evaluation-driven health screening agent research platform." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <title>HealthAI Agent Lab</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <button class="wordmark nav-home" type="button" data-view-target="lab" aria-label="Open HealthAI Lab">
+        <img src="/healthai-logo.png" alt="" />
+        <span>Health<span class="brand-accent">AI</span></span>
+      </button>
+      <nav class="primary-nav" aria-label="Primary navigation">
+        <button class="active" type="button" data-view-target="lab">Lab</button>
+        <button type="button" data-view-target="assessment">Assessment</button>
+        <button type="button" data-view-target="evaluation">Evaluation</button>
+        <button type="button" data-view-target="research">Research</button>
+        <button type="button" data-view-target="safety">Safety</button>
+      </nav>
+      <div class="topbar-actions">
+        <span class="lab-mode"><span class="material-symbols-outlined">science</span> Research preview</span>
+        <button class="locale-chip" type="button" data-view-target="assessment">EN / HI</button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="app-view landing-view active" data-view="lab">
+        <div class="hero hero-banner">
+          <div class="hero-copy">
+            <span class="overline"><i></i> AI-assisted health screening</span>
+            <h1>Understand your health signals. <em>Earlier.</em></h1>
+            <p>Four focused research screening tools turn reviewed health measurements into bounded risk signals, while the local reasoner handles conversation and general wellness questions.</p>
+            <div class="hero-actions">
+              <button class="button primary" type="button" data-view-target="assessment">Start assessment <span>→</span></button>
+              <button class="button secondary" type="button" data-view-target="research"><span class="play-mark">▶</span> See how it works</button>
+            </div>
+            <p class="hero-note"><span>◆</span> No account required. Assessment values are not added to a user profile.</p>
+          </div>
+          <div class="health-preview" aria-label="Preview of the HealthAI screening dashboard">
+            <div class="preview-sheet">
+              <div class="preview-head"><div><small>Screening overview</small><h2>Health signals</h2></div><span class="preview-ready"><i></i> Ready</span></div>
+              <div class="signal-chart"><div class="chart-legend"><span><i></i>Signal</span><span>— Baseline</span></div><div class="chart-bars" aria-hidden="true"><i style="--h:30%"></i><i style="--h:44%"></i><i style="--h:38%"></i><i style="--h:58%"></i><i style="--h:50%"></i><i style="--h:72%"></i><i style="--h:63%"></i><i style="--h:84%"></i><i style="--h:76%"></i><i style="--h:94%"></i></div></div>
+              <div class="preview-stats"><div><span>♡</span><small>Assessments</small><strong>2 focused models</strong></div><div><span>ϟ</span><small>Typical result</small><strong>In a few seconds</strong></div></div>
+            </div>
+            <div class="floating-proof proof-status"><span>✓</span><small>Model status</small><strong>Available now</strong></div>
+            <div class="floating-proof proof-purpose proof-voice"><span class="material-symbols-outlined">graphic_eq</span><small>Medical voice AI</small><strong>On-device Moonshine</strong></div>
+          </div>
+        </div>
+
+        <div class="landing-content">
+          <section class="workspace-teaser clinical-card accent-top">
+            <div class="section-row"><div><span class="section-kicker">Interactive workspace</span><h2>Triage in text or voice.</h2></div><span class="status-chip success">Safety layer active</span></div>
+            <div class="teaser-grid">
+              <div class="sample-input"><small>Patient input</small><p>“I have been unusually thirsty and urinating often. Can you help me understand which screening fits?”</p><button type="button" data-view-target="assessment">Open live assessment <span>→</span></button></div>
+              <div class="extraction-preview"><small>Expected execution trace</small><dl><div><dt>Safety gate</dt><dd>Clear</dd></div><div><dt>Route intent</dt><dd>Diabetes tool</dd></div><div><dt>Required inputs</dt><dd>16 fields</dd></div><div><dt>Result format</dt><dd>PDF / XLSX</dd></div></dl></div>
+            </div>
+          </section>
+
+          <section class="architecture-section">
+            <div class="center-heading"><span class="section-kicker">Controlled agent loop</span><h2>4-stage execution architecture</h2><p>Language models may propose an action. Deterministic code decides whether it is allowed to run.</p></div>
+            <div class="architecture-grid">
+              <article class="clinical-card"><span class="stage-icon material-symbols-outlined">security</span><small>Stage 01</small><h3>Safety gate</h3><p>Emergency phrases pre-empt every model and route the user to immediate human care.</p></article>
+              <article class="clinical-card"><span class="stage-icon material-symbols-outlined">data_object</span><small>Stage 02</small><h3>Extraction</h3><p>Conversation is converted into schema-bound intent and patient facts.</p></article>
+              <article class="clinical-card"><span class="stage-icon material-symbols-outlined">account_tree</span><small>Stage 03</small><h3>Orchestration</h3><p>Only registered specialist tools with complete inputs may be invoked.</p></article>
+              <article class="clinical-card"><span class="stage-icon material-symbols-outlined">fact_check</span><small>Stage 04</small><h3>Verification</h3><p>Every result includes its model version, dataset boundary and limitations.</p></article>
+            </div>
+          </section>
+
+          <section class="model-summary">
+            <div class="section-row"><div><span class="section-kicker">Allowlisted tools</span><h2>Small models. Explicit boundaries.</h2></div><button class="text-link" type="button" data-view-target="research">Open registry →</button></div>
+            <div class="model-grid">
+              <article class="clinical-card model-card active-model"><div class="model-card-head"><span class="material-symbols-outlined">cardiology</span><span class="model-status" data-model-status="heart">Checking</span></div><h3>Heart risk</h3><p>Tabular screening baseline with 13 required clinical inputs.</p><footer><span>ONNX · CPU</span><span>Research</span></footer></article>
+              <article class="clinical-card model-card active-model"><div class="model-card-head"><span class="material-symbols-outlined">water_drop</span><span class="model-status" data-model-status="diabetes">Checking</span></div><h3>Early diabetes signs</h3><p>Symptom questionnaire baseline with 16 explicit fields.</p><footer><span>ONNX · CPU</span><span>Research</span></footer></article>
+              <article class="clinical-card model-card active-model"><div class="model-card-head"><span class="material-symbols-outlined">nephrology</span><span class="model-status" data-model-status="kidney">Checking</span></div><h3>Kidney pattern</h3><p>Clinical and laboratory baseline with 24 reviewed inputs.</p><footer><span>ONNX · CPU</span><span>Research</span></footer></article>
+              <article class="clinical-card model-card active-model"><div class="model-card-head"><span class="material-symbols-outlined">gastroenterology</span><span class="model-status" data-model-status="liver">Checking</span></div><h3>Liver pattern</h3><p>Indian liver-patient baseline with 10 reviewed laboratory inputs.</p><footer><span>ONNX · CPU</span><span>Research</span></footer></article>
+              <article class="clinical-card model-card active-model"><div class="model-card-head"><span class="material-symbols-outlined">clinical_notes</span><span class="model-status available">Callable</span></div><h3>Stateful clinical-intake reasoning</h3><p>Qwen selects reviewed pathways while confirmed measurements, timing, symptoms and risk context feed an auditable disposition policy.</p><footer><span>Evidence state</span><span>Policy gated</span></footer></article>
+              <article class="clinical-card model-card active-model"><div class="model-card-head"><span class="material-symbols-outlined">self_improvement</span><span class="model-status available">Callable</span></div><h3>Wellness guidance</h3><p>General education for sleep, hydration, activity and nutrition without diagnostic claims.</p><footer><span>Local reasoner</span><span>Bounded</span></footer></article>
+              <article class="clinical-card model-card active-model"><div class="model-card-head"><span class="material-symbols-outlined">radiology</span><span class="model-status available">Experimental</span></div><h3>Pneumonia X-ray</h3><p>Reproducible pediatric PneumoniaMNIST baseline with a reviewed image-upload gate.</p><footer><span>ONNX · CPU</span><span>Pediatric only</span></footer></article>
+              <article class="clinical-card model-card muted"><div class="model-card-head"><span class="material-symbols-outlined">dermatology</span><span class="status-chip">Evaluation gate</span></div><h3>Skin-image intake</h3><p>Visible in the registry but blocked until diverse licensed data and subgroup evaluation pass.</p><footer><span>Not callable</span><span>Planned</span></footer></article>
+            </div>
+          </section>
+
+          <section class="privacy-banner clinical-card"><span class="material-symbols-outlined">lock</span><div><h2>Private by design</h2><p>No external AI API receives the conversation. Voice and model inference execute inside the project’s own AWS environment.</p></div></section>
+        </div>
+      </section>
+
+      <section class="app-view assessment-view" data-view="assessment" hidden>
+        <aside class="lab-sidebar">
+          <div class="lab-id"><img src="/healthai-logo.png" alt="HealthAI" /><div><strong>Research Lab</strong><small>Controlled screening workspace</small></div></div>
+          <button class="new-session" id="reset-session" type="button" title="Remove this conversation from this browser">Clear history &amp; start new</button>
+          <nav aria-label="Assessment stages">
+            <button class="stage-nav active selected" id="stage-safety" type="button" data-stage-target="safety"><i class="material-symbols-outlined">security</i><span>Safety gate</span></button>
+            <button class="stage-nav" id="stage-extraction" type="button" data-stage-target="extraction"><i class="material-symbols-outlined">content_cut</i><span>Extraction</span></button>
+            <button class="stage-nav" id="stage-orchestration" type="button" data-stage-target="orchestration"><i class="material-symbols-outlined">account_tree</i><span>Orchestration</span></button>
+            <button class="stage-nav" id="stage-verification" type="button" data-stage-target="verification"><i class="material-symbols-outlined">fact_check</i><span>Verification</span></button>
+          </nav>
+          <div class="language-control"><label for="locale">Conversation language</label><select id="locale"><option value="en">English</option><option value="hi">हिन्दी</option></select></div>
+          <div class="privacy-note"><span class="material-symbols-outlined">encrypted</span><p><strong>Private browser memory</strong>Chat stays only in this browser until you clear it. Encrypted reasoning context lasts 7 days.</p></div>
+        </aside>
+
+        <div class="assessment-main">
+          <header class="view-header"><div><span class="section-kicker">Clinical reality demo</span><h1>Live assessment</h1><p>Real-time intake and controlled specialist-tool orchestration.</p></div><span class="stream-chip"><i></i><span id="pipeline-state">Safety gate ready</span></span></header>
+          <div class="pipeline-stepper" aria-label="Pipeline progress">
+            <span class="current"><i class="material-symbols-outlined">shield</i>Safety gate</span><b></b>
+            <span><i class="material-symbols-outlined">pending</i>Extraction</span><b></b>
+            <span><i class="material-symbols-outlined">pending</i>Orchestration</span><b></b>
+            <span><i class="material-symbols-outlined">pending</i>Verification</span>
+          </div>
+
+          <section class="chat-shell clinical-card" id="assessment-chat">
+            <div class="chat-top"><div><span class="assistant-avatar agent-voice-avatar"><span class="material-symbols-outlined">graphic_eq</span></span><p><strong>HealthAI medical voice agent</strong><small><i></i> Safety layer active · local inference</small></p></div><div class="chat-statuses"><span class="status-chip memory-chip"><span class="material-symbols-outlined">shield_lock</span> Saved in this browser</span><span class="status-chip voice-ai-chip"><i></i> Medical voice AI</span></div></div>
+            <div class="messages" id="messages" aria-live="polite">
+              <div class="message assistant"><span class="assistant-avatar message-voice-avatar"><span class="material-symbols-outlined">graphic_eq</span></span><div><p>Describe what you are experiencing naturally. I can run a structured clinical-intake protocol, reason over the confirmed details, discuss general wellness, or prepare an evidence-backed research screening.</p><small>HealthAI · now</small></div></div>
+            </div>
+            <div id="assessment-fields" class="assessment-fields" hidden></div>
+            <form class="composer" id="chat-form">
+              <label class="sr-only" for="message-input">Describe your concern</label>
+              <textarea id="message-input" rows="3" maxlength="1200" placeholder="Enter clinical symptoms or use voice input…" required></textarea>
+              <div class="composer-actions"><button class="voice-button" id="voice-button" type="button" aria-label="Record medical symptoms for up to 30 seconds"><span class="voice-orb-icon"><span class="material-symbols-outlined">mic</span></span><span class="voice-label"><strong>Speak symptoms</strong><small>Private · Moonshine ASR</small></span><span class="voice-wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span></button><input id="xray-input" type="file" accept="image/jpeg,image/png" hidden><button class="image-tool-button" id="xray-button" type="button" aria-label="Upload a pediatric chest X-ray for the research model"><span class="material-symbols-outlined">radiology</span><span><strong>Chest X-ray</strong><small>Pediatric research · reviewed upload</small></span></button><small id="composer-status">English · text, voice or image</small><button class="send-button" type="submit">Send <span>↑</span></button></div>
+            </form>
+            <p class="emergency-note">Severe or sudden symptoms: call India emergency services at <strong>112</strong>.</p>
+          </section>
+
+          <section class="entity-section" id="session-trace"><div class="subsection-head"><div><span class="material-symbols-outlined">data_object</span><h2>Session trace</h2></div><small>Only confirmed state is displayed</small></div><div class="entity-grid" id="entity-grid"><article class="entity-card"><small>Input channel</small><strong>Text or voice</strong><span>Awaiting message</span></article><article class="entity-card"><small>Safety status</small><strong>Guarded</strong><span>Runs before routing</span></article><article class="entity-card"><small>Tool route</small><strong>Pending</strong><span>No tool selected</span></article></div></section>
+        </div>
+
+        <aside class="triage-sidebar">
+          <div class="triage-head"><span class="material-symbols-outlined">medical_services</span><h2>Preliminary triage</h2></div>
+          <div id="triage-panel" class="triage-content"><article class="triage-route stage-guide"><span class="material-symbols-outlined">security</span><small>Stage 01</small><h3>Safety gate</h3><p>Urgent-language rules run before extraction or model routing. A match bypasses every research tool.</p><ul><li>Emergency rules are deterministic</li><li>Escalation points to immediate human care</li><li>No risk score is shown during escalation</li></ul></article></div>
+          <div class="safety-disclaimer"><span class="material-symbols-outlined">info</span><p><strong>Safety first:</strong> This is an AI-assisted research screening. It does not replace professional clinical judgment.</p></div>
+        </aside>
+      </section>
+
+      <section class="app-view dashboard-view" data-view="evaluation" hidden>
+        <div class="page-shell">
+          <header class="page-title"><div><span class="section-kicker">Transparent evaluation</span><h1>Evidence, not accuracy theatre.</h1><p>Every number names its environment and boundary. Live capability status comes from the running build; benchmark evidence remains separate from operational readiness.</p></div><div class="page-actions"><span class="runtime-badge" id="evaluation-runtime"><i></i> Checking local runtime</span><button class="button secondary" type="button" id="refresh-evaluation">Refresh evidence</button></div></header>
+          <div class="kpi-grid">
+            <article class="clinical-card"><small>Automated checks</small><strong>15 / 15</strong><span class="positive">Last local test run</span></article>
+            <article class="clinical-card accent-top"><small>Voice cold path</small><strong>1.08s</strong><span class="positive">5.05s medical sample</span></article>
+            <article class="clinical-card"><small>Callable tools</small><strong id="live-tool-count">2</strong><span>Registry enforced</span></article>
+            <article class="clinical-card"><small>External AI APIs</small><strong>0</strong><span>Self-hosted inference</span></article>
+          </div>
+          <div class="dashboard-grid">
+            <section class="clinical-card table-panel"><div class="panel-head"><div><h2>Speech evidence</h2><p>One reproducible smoke sample—not a clinical WER benchmark.</p></div><span class="status-chip success">Measured locally</span></div><div class="table-scroll"><table><thead><tr><th>Model</th><th>Architecture</th><th>Observed result</th><th>Cold path</th><th>Decision</th></tr></thead><tbody><tr><td><strong>Moonshine Tiny Streaming</strong></td><td>34M · ARM64 CPU</td><td>Medical key terms retained in a 5.05s synthetic sample</td><td>1.08s</td><td><span class="status-chip success">Selected</span></td></tr><tr><td>Nemotron ASR</td><td>Large CPU image</td><td>Build path exceeded the cost envelope</td><td>Not accepted</td><td><span class="status-chip">Removed</span></td></tr><tr><td>Whisper</td><td>Baseline candidate</td><td>No project benchmark yet</td><td>Not measured</td><td><span class="status-chip">Evaluation backlog</span></td></tr></tbody></table></div></section>
+            <aside class="clinical-card registry-links"><div class="panel-head"><div><h2>Activation gates</h2><p>All four must pass before a tool is callable.</p></div></div><ol><li><span>01</span><div><strong>Data provenance</strong><small>Source, license and population recorded</small></div></li><li><span>02</span><div><strong>Held-out evaluation</strong><small>Discrimination, calibration and error analysis</small></div></li><li><span>03</span><div><strong>Safety scenarios</strong><small>Emergency pre-emption and invalid inputs tested</small></div></li><li><span>04</span><div><strong>Runtime evidence</strong><small>Latency, memory, failure mode and cost captured</small></div></li></ol></aside>
+          </div>
+          <section class="evaluation-notes"><article><span class="material-symbols-outlined">analytics</span><div><strong>Model quality</strong><p>AUROC is not a diagnosis. Calibration, subgroup behavior and dataset shift matter before any clinical claim.</p></div></article><article><span class="material-symbols-outlined">speed</span><div><strong>System quality</strong><p>Routing accuracy, emergency recall, latency and report provenance are evaluated independently.</p></div></article><article><span class="material-symbols-outlined">receipt_long</span><div><strong>Reproducibility</strong><p>Versioned artifacts and explicit input schemas make every result auditable.</p></div></article></section>
+        </div>
+      </section>
+
+      <section class="app-view research-view" data-view="research" hidden>
+        <div class="page-shell with-side-rail">
+          <aside class="research-rail"><div><span class="material-symbols-outlined">science</span><strong>Research Lab</strong><small>Registry · provenance · boundaries</small></div><nav><button type="button" data-research-target="datasets">Active datasets</button><button type="button" data-research-target="registry">Model registry</button><button type="button" data-research-target="legacy">Experimental</button><button type="button" data-research-target="methodology">Methodology</button></nav></aside>
+          <div class="research-content">
+            <header class="page-title"><div><span class="section-kicker">Evidence before activation</span><h1>Model registry with honest boundaries.</h1><p>This page separates callable artifacts, locally verified infrastructure, planned components and blocked legacy experiments.</p></div><span class="runtime-badge" id="registry-runtime"><i></i> Loading registry</span></header>
+            <section id="datasets" class="research-section"><div class="subsection-head"><div><span class="material-symbols-outlined">database</span><h2>Active datasets</h2></div></div><div class="dataset-grid"><article class="clinical-card accent-top"><div class="card-title"><h3>Heart risk prediction</h3><span class="status-chip success">Research</span></div><p>UCI Statlog Heart dataset with structured cardiovascular indicators.</p><div class="schema-block"><small>Inputs · 13 features</small><code>age, sex, chest pain, BP, cholesterol, ECG, max heart rate…</code></div></article><article class="clinical-card accent-top"><div class="card-title"><h3>Early diabetes risk</h3><span class="status-chip success">Research</span></div><p>Early-stage diabetes symptom questionnaire from a single-centre study.</p><div class="schema-block"><small>Inputs · 16 features</small><code>age, gender, polyuria, polydipsia, weight loss, weakness…</code></div></article><article class="clinical-card accent-top"><div class="card-title"><h3>Kidney disease pattern</h3><span class="status-chip success">Research</span></div><p>UCI Chronic Kidney Disease hospital dataset with explicit missing-value handling.</p><div class="schema-block"><small>Inputs · 24 features</small><code>urinalysis, glucose, urea, creatinine, electrolytes, blood counts…</code></div></article><article class="clinical-card accent-top"><div class="card-title"><h3>Liver disease pattern</h3><span class="status-chip success">Research</span></div><p>UCI Indian Liver Patient Dataset with documented cohort imbalance.</p><div class="schema-block"><small>Inputs · 10 features</small><code>bilirubin, ALT, AST, proteins, albumin, A/G ratio…</code></div></article></div></section>
+            <section id="registry" class="research-section"><div class="subsection-head"><div><span class="material-symbols-outlined">memory</span><h2>Model registry</h2></div><small>Runtime status, not marketing claims</small></div><div class="clinical-card table-panel"><div class="table-scroll"><table><thead><tr><th>Model</th><th>Architecture</th><th>Role</th><th>Runtime</th><th>Status</th></tr></thead><tbody id="model-registry-body"><tr><td>Heart screening</td><td>Tabular ONNX</td><td>Risk pattern</td><td>Lambda CPU</td><td><span class="status-chip success">Callable</span></td></tr><tr><td>Early diabetes</td><td>Tabular ONNX</td><td>Symptom pattern</td><td>Lambda CPU</td><td><span class="status-chip success">Callable</span></td></tr><tr><td>Moonshine ASR</td><td>Tiny Streaming · 34M</td><td>English voice</td><td>ARM64 Lambda</td><td><span class="status-chip">Image verified</span></td></tr><tr><td>Qwen3-0.6B</td><td>Decoder LLM</td><td>Extraction & routing</td><td>Planned Lambda</td><td><span class="status-chip">Not deployed</span></td></tr></tbody></table></div></div></section>
+            <section id="legacy" class="research-section"><div class="subsection-head"><div><span class="material-symbols-outlined">experiment</span><h2>Legacy & experimental</h2></div></div><div class="legacy-grid"><article class="clinical-card"><span class="status-chip danger">Blocked</span><h3>Kidney disease</h3><p>Requires missing-value strategy, calibration and subgroup review.</p></article><article class="clinical-card"><span class="status-chip danger">Blocked</span><h3>Liver patient</h3><p>Requires dataset license confirmation and bias evaluation.</p></article><article class="clinical-card"><span class="status-chip danger">Blocked</span><h3>Stroke prediction</h3><p>Severe imbalance requires a defensible evaluation protocol.</p></article></div></section>
+            <section id="methodology" class="methodology clinical-card"><span class="material-symbols-outlined">menu_book</span><div><span class="section-kicker">Research methodology</span><h2>One language reasoner, many bounded tools.</h2><p>Qwen will be confined to structured extraction, routing and explanation. Diagnostic scores remain the responsibility of versioned specialist models and deterministic calculators.</p><ul><li><strong>Extraction over invention:</strong> schema-constrained JSON only.</li><li><strong>Deterministic execution:</strong> tool inputs are validated before inference.</li><li><strong>Traceability:</strong> result, version, dataset and limitations travel together.</li></ul></div></section>
+          </div>
+        </div>
+      </section>
+
+      <section class="app-view safety-view" data-view="safety" hidden>
+        <div class="page-shell narrow-shell"><header class="page-title"><div><span class="section-kicker">Clinical boundary</span><h1>Safety is a control plane.</h1><p>The system is an educational engineering demonstration—not a medical device, diagnosis service or treatment recommendation.</p></div><button class="button primary" type="button" data-view-target="assessment">Try the guarded flow</button></header><div class="safety-flow" aria-label="Safety execution order"><article><b>01</b><strong>Detect urgent language</strong><span>Runs before routing</span></article><i>→</i><article><b>02</b><strong>Constrain the route</strong><span>Allowlisted tools only</span></article><i>→</i><article><b>03</b><strong>Confirm structured inputs</strong><span>Human review required</span></article><i>→</i><article><b>04</b><strong>Attach limitations</strong><span>Every result and report</span></article></div><div class="safety-grid"><article class="clinical-card danger-card"><span class="material-symbols-outlined">emergency</span><h2>Emergency pre-emption</h2><p>Severe chest pain, breathing difficulty, facial drooping, arm weakness or loss of consciousness bypass all models. Call India emergency services at <strong>112</strong>.</p></article><article class="clinical-card"><span class="material-symbols-outlined">verified_user</span><h2>Bounded outputs</h2><p>Every screening result states that it can be wrong and cannot establish or rule out a condition.</p></article><article class="clinical-card"><span class="material-symbols-outlined">policy</span><h2>Tool allowlist</h2><p>Legacy artifacts remain blocked until their datasets, metrics and limitations pass the registry gates.</p></article><article class="clinical-card"><span class="material-symbols-outlined">visibility</span><h2>Human confirmation</h2><p>Voice transcripts and structured input values must be reviewed before any specialist model runs.</p></article></div><section class="limitations-panel clinical-card"><div><span class="material-symbols-outlined">warning</span><h2>Known limitations</h2></div><ul><li>Heart, diabetes, kidney and liver research routes are locally callable; none is clinically validated.</li><li>Models were trained on small public datasets and are not externally validated medical devices.</li><li>English voice transcription is locally verified; multilingual ASR remains future work.</li><li>Qwen handles conversation and constrained route proposals; deterministic code retains execution authority.</li></ul></section></div>
+      </section>
+    </main>
+
+    <footer class="site-footer"><div class="footer-brand"><img src="/healthai-logo.png" alt="" /><div><strong>HealthAI Agent Lab</strong><small>Open-model engineering with measurable boundaries.</small></div></div><span>Educational research only · © 2026</span><nav><button type="button" data-view-target="safety">Safety</button><button type="button" data-view-target="research">Model cards</button></nav></footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

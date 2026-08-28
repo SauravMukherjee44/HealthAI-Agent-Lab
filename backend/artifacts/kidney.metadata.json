@@ -1,0 +1,93 @@
+{
+  "slug": "kidney",
+  "version": "kidney-uci-candidate-selected-v2",
+  "generated_at": "2026-08-27T09:41:04.861252+00:00",
+  "validation_status": "research",
+  "feature_order": [
+    "age",
+    "blood_pressure",
+    "specific_gravity",
+    "albumin",
+    "sugar",
+    "red_blood_cells",
+    "pus_cell",
+    "pus_cell_clumps",
+    "bacteria",
+    "blood_glucose_random",
+    "blood_urea",
+    "serum_creatinine",
+    "sodium",
+    "potassium",
+    "hemoglobin",
+    "packed_cell_volume",
+    "white_blood_cell_count",
+    "red_blood_cell_count",
+    "hypertension",
+    "diabetes_mellitus",
+    "coronary_artery_disease",
+    "appetite",
+    "pedal_edema",
+    "anemia"
+  ],
+  "threshold": 0.95,
+  "metrics": {
+    "auroc": 1.0,
+    "auprc": 1.0,
+    "sensitivity": 0.9,
+    "specificity": 1.0,
+    "ppv": 1.0,
+    "npv": 0.8571,
+    "brier": 0.0118,
+    "test_samples": 80
+  },
+  "model_selection": {
+    "selected": "rbf_support_vector_machine",
+    "selection_set": "validation-only",
+    "candidates": {
+      "regularized_logistic_regression": {
+        "threshold": 0.95,
+        "metrics": {
+          "auroc": 1.0,
+          "auprc": 1.0,
+          "sensitivity": 0.9,
+          "specificity": 1.0,
+          "ppv": 1.0,
+          "npv": 0.8571,
+          "brier": 0.003,
+          "test_samples": 80
+        }
+      },
+      "rbf_support_vector_machine": {
+        "threshold": 0.95,
+        "metrics": {
+          "auroc": 1.0,
+          "auprc": 1.0,
+          "sensitivity": 0.98,
+          "specificity": 1.0,
+          "ppv": 1.0,
+          "npv": 0.9677,
+          "brier": 0.0008,
+          "test_samples": 80
+        }
+      }
+    }
+  },
+  "dataset": {
+    "name": "UCI Chronic Kidney Disease",
+    "doi": "10.24432/C5G020",
+    "license": "CC BY 4.0",
+    "instances": 400
+  },
+  "limitations": [
+    "The dataset contains only 400 historical hospital records and has substantial missing data in several fields.",
+    "Many inputs are laboratory or microscopy findings that require professional collection and interpretation.",
+    "The source population and collection setting may not represent current community screening populations.",
+    "Performance has not been established prospectively or in an external clinical cohort."
+  ],
+  "split": {
+    "train": 240,
+    "validation": 80,
+    "test": 80,
+    "random_state": 44
+  }
+}

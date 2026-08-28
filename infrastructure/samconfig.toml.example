@@ -1,0 +1,15 @@
+version = 0.1
+
+[default.build.parameters]
+cached = true
+parallel = true
+template_file = "infrastructure/template.yaml"
+
+[default.deploy.parameters]
+stack_name = "healthai-staging"
+resolve_s3 = true
+resolve_image_repos = true
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+region = "eu-north-1"
+parameter_overrides = "Environment=staging AllowedOrigin=*"

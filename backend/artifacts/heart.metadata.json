@@ -1,0 +1,81 @@
+{
+  "slug": "heart",
+  "version": "heart-uci-candidate-selected-v2",
+  "generated_at": "2026-08-27T09:40:59.111491+00:00",
+  "validation_status": "research",
+  "feature_order": [
+    "age",
+    "sex",
+    "chest_pain",
+    "resting_bp",
+    "serum_cholesterol",
+    "fasting_blood_sugar",
+    "resting_ecg",
+    "max_heart_rate",
+    "exercise_angina",
+    "oldpeak",
+    "st_slope",
+    "major_vessels",
+    "thal"
+  ],
+  "threshold": 0.075,
+  "metrics": {
+    "auroc": 0.8792,
+    "auprc": 0.8376,
+    "sensitivity": 1.0,
+    "specificity": 0.3667,
+    "ppv": 0.5581,
+    "npv": 1.0,
+    "brier": 0.1408,
+    "test_samples": 54
+  },
+  "model_selection": {
+    "selected": "rbf_support_vector_machine",
+    "selection_set": "validation-only",
+    "candidates": {
+      "regularized_logistic_regression": {
+        "threshold": 0.115,
+        "metrics": {
+          "auroc": 0.8347,
+          "auprc": 0.7604,
+          "sensitivity": 0.9167,
+          "specificity": 0.5667,
+          "ppv": 0.6286,
+          "npv": 0.8947,
+          "brier": 0.1687,
+          "test_samples": 54
+        }
+      },
+      "rbf_support_vector_machine": {
+        "threshold": 0.075,
+        "metrics": {
+          "auroc": 0.8736,
+          "auprc": 0.8544,
+          "sensitivity": 0.9167,
+          "specificity": 0.4667,
+          "ppv": 0.5789,
+          "npv": 0.875,
+          "brier": 0.1425,
+          "test_samples": 54
+        }
+      }
+    }
+  },
+  "dataset": {
+    "name": "UCI Statlog (Heart)",
+    "doi": "10.24432/C57303",
+    "license": "CC BY 4.0",
+    "instances": 270
+  },
+  "limitations": [
+    "The dataset contains only 270 historical records and may not represent the Indian population.",
+    "The model uses clinical measurements that require professional collection and interpretation.",
+    "Performance has not been established prospectively or in an external clinical cohort."
+  ],
+  "split": {
+    "train": 162,
+    "validation": 54,
+    "test": 54,
+    "random_state": 44
+  }
+}
