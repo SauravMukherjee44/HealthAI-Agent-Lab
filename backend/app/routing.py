@@ -12,13 +12,28 @@ from .tool_registry import SpecialistToolRegistry
 CONDITION_TERMS = {
     "heart_risk": {
         "heart",
+        "heart disease",
+        "heart condition",
         "cardiac",
+        "cardiovascular",
         "chest pain",
         "cholesterol",
         "hypertension",
         "high blood pressure",
         "blood vessel blockage",
+        "blood vessels blockage",
         "blockage in blood vessels",
+        "blocked blood vessel",
+        "blocked blood vessels",
+        "arterial blockage",
+        "artery blockage",
+        "blocked artery",
+        "blocked arteries",
+        "clogged artery",
+        "clogged arteries",
+        "coronary blockage",
+        "coronary artery disease",
+        "atherosclerosis",
         "angina",
         "ecg",
         "दिल",
@@ -31,10 +46,18 @@ CONDITION_TERMS = {
         "diabetic",
         "sugar",
         "blood sugar",
+        "high blood sugar",
         "glucose",
+        "high glucose",
+        "prediabetes",
+        "pre diabetes",
+        "hyperglycemia",
+        "hba1c",
+        "a1c",
         "excessive thirst",
         "very thirsty",
         "frequent urination",
+        "urinating frequently",
         "urinating often",
         "polyuria",
         "polydipsia",
@@ -45,10 +68,21 @@ CONDITION_TERMS = {
     },
     "kidney_risk": {
         "kidney",
+        "kidneys",
+        "kidney disease",
+        "kidney problem",
+        "kidney issues",
         "renal",
+        "renal disease",
         "creatinine",
         "blood urea",
+        "urea level",
         "urine albumin",
+        "albuminuria",
+        "protein in urine",
+        "proteinuria",
+        "egfr",
+        "gfr",
         "ckd",
         "गुर्दा",
         "किडनी",
@@ -56,16 +90,53 @@ CONDITION_TERMS = {
     },
     "liver_risk": {
         "liver",
+        "liver disease",
+        "liver problem",
+        "liver issues",
+        "fatty liver",
         "bilirubin",
         "jaundice",
         "alt",
         "ast",
+        "sgpt",
+        "sgot",
+        "lft",
+        "liver enzymes",
         "liver function",
         "लिवर",
         "जिगर",
         "बिलीरुबिन",
         "पीलिया",
     },
+}
+
+# Flexible patterns cover the word-order and inflection variation common in
+# typed and transcribed speech. They deliberately remain high precision: a
+# specialist form is opened only when both the finding and anatomy are present.
+CONDITION_PATTERNS = {
+    "heart_risk": (
+        re.compile(
+            r"\b(?:block(?:age|ed)|clog(?:ged|ging)?|narrow(?:ed|ing)?)\b.{0,24}"
+            r"\b(?:blood\s+vessels?|arter(?:y|ies)|coronary\s+arter(?:y|ies))\b"
+        ),
+        re.compile(
+            r"\b(?:blood\s+vessels?|arter(?:y|ies)|coronary\s+arter(?:y|ies))\b.{0,24}"
+            r"\b(?:block(?:age|ed)|clog(?:ged|ging)?|narrow(?:ed|ing)?)\b"
+        ),
+    ),
+    "diabetes_risk": (
+        re.compile(r"\b(?:blood\s+)?(?:sugar|glucose)\b.{0,18}\b(?:high|elevated|raised)\b"),
+        re.compile(r"\b(?:high|elevated|raised)\b.{0,18}\b(?:blood\s+)?(?:sugar|glucose)\b"),
+    ),
+    "kidney_risk": (
+        re.compile(r"\b(?:kidneys?|renal)\b.{0,18}\b(?:disease|problem|issue|failure|function|screen(?:ing)?)\b"),
+        re.compile(r"\b(?:low|reduced|abnormal)\b.{0,18}\b(?:egfr|gfr|kidney\s+function)\b"),
+        re.compile(r"\b(?:protein|albumin)\b.{0,14}\burine\b"),
+    ),
+    "liver_risk": (
+        re.compile(r"\bliver\b.{0,18}\b(?:disease|problem|issue|function|enzyme|screen(?:ing)?)s?\b"),
+        re.compile(r"\b(?:high|elevated|raised|abnormal)\b.{0,18}\b(?:bilirubin|alt|ast|sgpt|sgot|liver\s+enzymes?)\b"),
+    ),
 }
 
 GREETING_TERMS = {"hi", "hello", "hey", "good morning", "good evening", "नमस्ते", "हेलो"}
@@ -402,7 +473,7 @@ class RulesRouter:
 
     def decide(self, messages: list[str]) -> OrchestrationDecision:
         user_messages = [message for message in messages if not message.startswith(ASSISTANT_FOLLOWUP_PREFIX)]
-        text = " ".join(user_messages).lower()
+        text = self._normalize_routing_text(" ".join(user_messages))
         latest = messages[-1].strip().lower()
         normalized_latest = re.sub(r"[^\w\s']+", " ", latest, flags=re.UNICODE)
         normalized_latest = " ".join(normalized_latest.split())
@@ -433,9 +504,7 @@ class RulesRouter:
                 mode="wellness",
             )
         symptom_topic = self._active_symptom_topic(messages)
-        scores = {
-            tool: sum(1 for term in terms if self._contains_term(text, term)) for tool, terms in CONDITION_TERMS.items()
-        }
+        scores = {tool: self._condition_score(text, tool) for tool in CONDITION_TERMS}
         highest = max(scores.values())
         winners = [tool for tool, score in scores.items() if score == highest and score > 0]
         if not winners:
@@ -591,33 +660,25 @@ class RulesRouter:
 
     @staticmethod
     def _has_explicit_predictor_intent(text: str) -> bool:
-        specific_terms = {
-            "heart",
-            "cardiac",
-            "cholesterol",
-            "hypertension",
-            "high blood pressure",
-            "blood vessel blockage",
-            "blockage in blood vessels",
-            "ecg",
-            "diabetes",
-            "diabetic",
-            "blood sugar",
-            "sugar",
-            "glucose",
-            "kidney",
-            "renal",
-            "creatinine",
-            "liver",
-            "bilirubin",
-            "jaundice",
-            "ckd",
-            "मधुमेह",
-            "हृदय",
-            "किडनी",
-            "लिवर",
-        }
-        return any(RulesRouter._contains_term(text, term) for term in specific_terms)
+        normalized = RulesRouter._normalize_routing_text(text)
+        return any(RulesRouter._condition_score(normalized, tool) for tool in CONDITION_TERMS)
+
+    @staticmethod
+    def _normalize_routing_text(text: str) -> str:
+        """Normalize punctuation and common ASR separators without changing meaning."""
+        normalized = re.sub(r"[_/\-]+", " ", text.casefold())
+        # Python's ``\w`` does not retain Devanagari combining marks, so keep
+        # the full block while still replacing punctuation for phrase matching.
+        normalized = re.sub(r"[^\w\s'\u0900-\u097F]+", " ", normalized, flags=re.UNICODE)
+        return " ".join(normalized.split())
+
+    @staticmethod
+    def _condition_score(text: str, tool: str) -> int:
+        term_matches = sum(
+            1 for term in CONDITION_TERMS[tool] if RulesRouter._contains_term(text, term)
+        )
+        pattern_matches = sum(bool(pattern.search(text)) for pattern in CONDITION_PATTERNS[tool])
+        return term_matches + pattern_matches
 
     @staticmethod
     def _is_disallowed_medical_request(text: str) -> bool:

@@ -84,6 +84,51 @@ def test_model_linked_signals_skip_generic_symptom_interview(registry, message, 
     assert decision.action == "ask_question"
 
 
+@pytest.mark.parametrize(
+    ("message", "tool"),
+    [
+        ("facing blood vessels blockage issue", "heart_risk"),
+        ("Doctors mentioned a blocked blood vessel", "heart_risk"),
+        ("I am worried about clogged arteries", "heart_risk"),
+        ("Could I screen for coronary artery disease?", "heart_risk"),
+        ("My blood-glucose is elevated", "diabetes_risk"),
+        ("I was told I have pre-diabetes", "diabetes_risk"),
+        ("My HbA1c result is high", "diabetes_risk"),
+        ("I am urinating frequently and very thirsty", "diabetes_risk"),
+        ("My eGFR is low", "kidney_risk"),
+        ("There is protein in my urine", "kidney_risk"),
+        ("I want to check a renal disease concern", "kidney_risk"),
+        ("I have kidney issues", "kidney_risk"),
+        ("My liver enzymes are elevated", "liver_risk"),
+        ("I have a fatty-liver concern", "liver_risk"),
+        ("My SGPT and SGOT are raised", "liver_risk"),
+        ("I want to review an abnormal LFT", "liver_risk"),
+    ],
+)
+def test_rules_router_normalizes_common_specialist_phrases(registry, message, tool):
+    decision = RulesRouter(registry).decide([message])
+
+    assert decision.tool == tool
+    assert decision.mode == "screening"
+    assert decision.action == "ask_question"
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "blood vessel is blocked",
+        "blockage of my coronary arteries",
+        "narrowing in the blood vessels",
+        "my arteries may be clogged",
+    ],
+)
+def test_flexible_vascular_word_order_routes_heart_model(registry, message):
+    decision = RulesRouter(registry).decide([message])
+
+    assert decision.tool == "heart_risk"
+    assert decision.mode == "screening"
+
+
 def test_rules_router_handles_general_wellness_without_a_predictive_model(registry):
     decision = RulesRouter(registry).decide(["How can I improve my sleep habits?"])
 
