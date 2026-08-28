@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/healthai-logo.png" alt="HealthAI Agent Lab" width="180" />
+  <img src="frontend/public/healthai-social-preview.png" alt="HealthAI Agent Lab — Open-weight medical AI. Measurable boundaries." width="100%" />
 </p>
 
 <h1 align="center">HealthAI Agent Lab</h1>
@@ -547,6 +547,16 @@ Cold starts are the trade-off. Qwen can spend roughly 25 seconds loading its GGU
 ## Responsible use
 
 Do not use this software to make a diagnosis, determine treatment, assess an emergency, or process identifiable patient data. Dataset licenses permit research reuse, but deployment in a healthcare context requires independent clinical validation, privacy/security review, bias analysis, monitoring, incident response, and compliance work appropriate to the jurisdiction.
+
+## Ownership and licensing
+
+**HealthAI Agent Lab is designed, developed, and maintained by [Saurav Mukherjee](https://github.com/SauravMukherjee44).** Project questions, responsible-disclosure reports, and collaboration enquiries can be sent to [SauravMukherjee928@gmail.com](mailto:SauravMukherjee928@gmail.com).
+
+Copyright © 2026 Saurav Mukherjee. All rights reserved.
+
+This repository does not currently grant an open-source software license. Its public availability is intended for portfolio review, research transparency, and technical evaluation; it does not by itself grant permission to copy, modify, redistribute, sublicense, or commercially use the project. Contact the owner if you need permission beyond viewing or evaluating the repository.
+
+Third-party model weights, datasets, libraries, icons, and other dependencies remain governed by their respective licenses and terms. Their inclusion or attribution does not change the licensing status of the original HealthAI Agent Lab source code.
 
 ---
 
