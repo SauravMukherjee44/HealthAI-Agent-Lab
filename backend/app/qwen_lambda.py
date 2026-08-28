@@ -55,7 +55,7 @@ def handler(event, _context):
                 ),
                 str(event["prompt"]),
                 DECISION_JSON_SCHEMA,
-                220,
+                140,
             )
             return {"content": content}
         if operation == "select_symptom_question":

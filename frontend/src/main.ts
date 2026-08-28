@@ -79,21 +79,30 @@ const STARTER_PROMPTS_HTML = `<div class="starter-prompts" aria-label="Example q
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
-const warmReasoner = () => {
+let warmupInFlight = false;
+const warmReasoner = async () => {
   try {
     const lastWarm = Number(sessionStorage.getItem(WARMUP_KEY) ?? 0);
     if (Date.now() - lastWarm < 10 * 60 * 1000) return;
-    // Mark before dispatch to deduplicate reloads. Failure is intentionally silent:
-    // warm-up is only a latency optimization and never creates conversation state.
-    sessionStorage.setItem(WARMUP_KEY, String(Date.now()));
   } catch {
     // Storage can be disabled; one best-effort request is still safe.
   }
-  void fetch(`${apiBase}/api/v1/runtime/warm`, {
-    method: "POST",
-    credentials: "include",
-    keepalive: true,
-  }).catch(() => undefined);
+  if (warmupInFlight) return;
+  warmupInFlight = true;
+  try {
+    const response = await fetch(`${apiBase}/api/v1/runtime/warm`, {
+      method: "POST",
+      credentials: "include",
+      keepalive: true,
+    });
+    // Record only a confirmed request. A failed mobile fetch must remain retryable.
+    if (response.ok || response.status === 429) sessionStorage.setItem(WARMUP_KEY, String(Date.now()));
+    else if (response.status >= 500) window.setTimeout(() => void warmReasoner(), 4000);
+  } catch {
+    window.setTimeout(() => void warmReasoner(), 4000);
+  } finally {
+    warmupInFlight = false;
+  }
 };
 
 const chatForm = document.querySelector<HTMLFormElement>("#chat-form")!;
@@ -224,7 +233,11 @@ const showView = (name: string, updateHash = true) => {
 
 // Start the private reasoner while the visitor is still reading the landing page,
 // just after the first visual render has had an opportunity to paint.
-window.setTimeout(warmReasoner, 400);
+window.setTimeout(() => void warmReasoner(), 100);
+window.addEventListener("pageshow", () => void warmReasoner());
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") void warmReasoner();
+});
 
 viewButtons.forEach((button) => button.addEventListener("click", () => showView(button.dataset.viewTarget ?? "lab")));
 const initialView = location.hash.slice(1);

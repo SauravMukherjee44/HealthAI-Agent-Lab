@@ -81,6 +81,23 @@ SMALL_TALK_PHRASES = {
     "nice to meet you",
 }
 
+# High-precision examples that are clearly outside this medical research lab.
+# These are handled locally so guardrail probes do not wake or wait for the LLM.
+OUT_OF_SCOPE_TERMS = {
+    "cricket",
+    "football",
+    "soccer",
+    "chess",
+    "video game",
+    "coding",
+    "javascript",
+    "python code",
+    "stock price",
+    "movie",
+    "song",
+    "recipe",
+}
+
 WELLNESS_TOPICS = {
     "sleep": {
         "sleep",
@@ -430,6 +447,15 @@ class RulesRouter:
                     response=SYMPTOM_FOLLOWUPS["general"][0],
                     mode="symptom_interview",
                 )
+            if self._is_obviously_out_of_scope(normalized_latest):
+                return OrchestrationDecision(
+                    action="unsupported",
+                    response=(
+                        "This workspace is focused on health concerns, general wellness, and its registered research "
+                        "screenings, so I can’t help with that topic here. If you have a health or wellness question, "
+                        "describe it naturally and I’ll run the safety check first."
+                    ),
+                )
             return OrchestrationDecision(
                 action="respond",
                 response=(
@@ -558,6 +584,10 @@ class RulesRouter:
             "समस्या",
         }
         return any(RulesRouter._contains_term(text, term) for term in terms)
+
+    @staticmethod
+    def _is_obviously_out_of_scope(text: str) -> bool:
+        return any(RulesRouter._contains_term(text, term) for term in OUT_OF_SCOPE_TERMS)
 
     @staticmethod
     def _has_explicit_predictor_intent(text: str) -> bool:
@@ -896,6 +926,8 @@ class QwenJsonRouter:
             "You handle friendly conversation, general wellness education, and route only four educational screening tools. "
             "Always include mode: conversation, wellness, symptom_interview, or screening. "
             "Reply naturally to greetings, thanks, capability questions, and harmless small talk using action=respond. "
+            "For clearly unrelated non-health requests such as sports rules, coding, entertainment, or finance, use "
+            "action=unsupported, tool=null, empty clinical objects, and briefly redirect to health or wellness. "
             "You may give brief general education about sleep, hydration, physical activity, and balanced nutrition. "
             "Keep wellness responses under 90 words; do not diagnose, prescribe a treatment or diet, recommend a medicine or dose, "
             "or claim that a habit will prevent or cure disease. Encourage qualified care for persistent or worsening symptoms. "
@@ -962,6 +994,13 @@ class HybridRouter:
         # start merely to reconfirm an allowlisted route.
         if baseline.tool:
             baseline.response = self._route_response(baseline.tool, len(baseline.known_fields))
+            return baseline
+        # Greetings, approved wellness education, and clear scope-boundary probes
+        # already have reviewed responses. Waiting for a scale-to-zero model here
+        # adds latency and cost without adding useful reasoning.
+        if baseline.mode == "wellness" or baseline.action == "unsupported" or self.rules._is_conversational(
+            messages[-1].strip().casefold()
+        ):
             return baseline
         if baseline.mode == "symptom_interview" and self.symptom_selector is not None:
             topic = self.rules._active_symptom_topic(messages)

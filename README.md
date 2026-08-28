@@ -134,10 +134,11 @@ flowchart LR
 1. The browser restores the anonymous conversation from local storage.
 2. The deterministic safety gate checks the new message before any model call.
 3. A clear registered-model request is routed directly to its specialist form.
-4. Otherwise Qwen proposes a conversational response, evidence fields, or an allowlisted follow-up question.
-5. The policy layer rejects unknown tools, invented fields, incomplete calls, and invalid state transitions.
-6. A deterministic router takes over when Qwen is unavailable, slow, malformed, or outside policy.
-7. The browser persists the sanitized conversation and encrypted state token.
+4. Greetings, reviewed wellness answers, and clear non-health boundary probes use immediate deterministic responses.
+5. For remaining language ambiguity, Qwen proposes evidence fields or selects an allowlisted follow-up question.
+6. The policy layer rejects unknown tools, invented fields, incomplete calls, and invalid state transitions.
+7. A 12-second private-model client deadline returns control to the deterministic router before the public API can time out.
+8. The browser persists the sanitized conversation and encrypted state token.
 
 The animated “thinking” state exposes operational stages such as safety review and tool routing. It does not expose hidden chain-of-thought.
 </details>
@@ -437,7 +438,7 @@ Default visitor quotas:
 
 | Route group | Short window | Daily visitor limit | Daily IP limit | Global daily capacity |
 |---|---:|---:|---:|---:|
-| Content-free reasoner warm-up | — | 2 | 20 | 200 |
+| Content-free reasoner warm-up | — | 6 | 60 | 300 |
 | Chat / triage | 20/minute | 200 | 500 | 1,000 |
 | Voice transcription | 4/10 minutes | 20 | 60 | 100 |
 | Pneumonia image | 10/10 minutes | 50 | 150 | 300 |
@@ -531,7 +532,7 @@ The primary cost strategy is **no idle compute**:
 - CloudWatch retention is bounded.
 - A monthly AWS Budget provides early warning.
 
-Cold starts are the trade-off. Qwen can spend roughly 25 seconds loading its GGUF on a cold invocation, while warm requests are faster. The landing page therefore requests a content-free asynchronous initialization shortly after first paint; it creates no conversation state, consumes no chat quota, is deduplicated in the browser for ten minutes, and has separate visitor/IP/global abuse limits. This improves the common first-message path without paying for an always-on instance or claiming that every cold start can be eliminated. A real user-facing service would benchmark provisioned concurrency, quantization, streaming, and stricter latency SLOs.
+Cold starts are the trade-off. Qwen can spend roughly 25 seconds loading its GGUF on a cold invocation, while warm requests are faster. The landing page therefore requests a content-free asynchronous initialization shortly after first paint and retries a failed mobile request when the page becomes visible again. It creates no conversation state, consumes no chat quota, is deduplicated only after AWS accepts it, and has separate visitor/IP/global abuse limits. Immediate deterministic paths keep greetings, wellness answers, registered tools, and clear scope probes responsive even while Qwen is loading; ambiguous requests fall back after a bounded 12-second wait. A real user-facing service would benchmark provisioned concurrency, quantization, streaming, and stricter latency SLOs.
 
 ## Known limitations and roadmap
 

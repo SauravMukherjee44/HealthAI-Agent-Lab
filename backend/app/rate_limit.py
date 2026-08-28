@@ -38,9 +38,9 @@ def limits_for(path: str, method: str) -> LimitPolicy | None:
         return None
     if path == "/api/v1/runtime/warm":
         return LimitPolicy(
-            client=(Limit(2, DAY, "warm-daily"),),
-            ip=(Limit(20, DAY, "warm-ip-daily"),),
-            global_=(Limit(200, DAY, "warm-capacity"),),
+            client=(Limit(6, DAY, "warm-daily"),),
+            ip=(Limit(60, DAY, "warm-ip-daily"),),
+            global_=(Limit(300, DAY, "warm-capacity"),),
         )
     if path == "/api/v1/voice/transcribe":
         return LimitPolicy(

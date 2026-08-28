@@ -63,7 +63,7 @@ class DockerModelRunner:
                 ],
                 "temperature": 0.0,
                 "top_p": 0.9,
-                "max_tokens": 220,
+                "max_tokens": 140,
                 "stream": False,
                 "response_format": {
                     "type": "json_schema",
@@ -170,8 +170,15 @@ class AwsLambdaModelRunner:
     def __init__(self, function_name: str, model: str, client=None):
         if client is None:
             import boto3
+            from botocore.config import Config
 
-            client = boto3.client("lambda")
+            # The public API Lambda has a 30-second ceiling. A cold private model
+            # must therefore fail open to the deterministic router well before
+            # that deadline instead of timing out the user-facing request.
+            client = boto3.client(
+                "lambda",
+                config=Config(connect_timeout=2, read_timeout=12, retries={"max_attempts": 0}),
+            )
         self.client = client
         self.function_name = function_name
         self.model = model

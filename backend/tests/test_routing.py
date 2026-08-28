@@ -92,6 +92,28 @@ def test_rules_router_handles_general_wellness_without_a_predictive_model(regist
     assert "sleep" in decision.response.lower()
 
 
+@pytest.mark.parametrize("message", ["How to play cricket", "Can I play cricket here?"])
+def test_rules_router_rejects_clear_non_health_topics(registry, message):
+    decision = RulesRouter(registry).decide([message])
+
+    assert decision.action == "unsupported"
+    assert decision.tool is None
+    assert "focused on health" in decision.response.lower()
+
+
+@pytest.mark.parametrize(
+    "message",
+    ["Hi", "How can I improve my sleep habits?", "How to play cricket"],
+)
+def test_hybrid_fast_paths_do_not_wait_for_qwen(registry, message):
+    qwen = QwenJsonRouter(lambda _prompt: (_ for _ in ()).throw(AssertionError("Qwen should not be invoked")))
+
+    decision = HybridRouter(qwen, RulesRouter(registry)).decide([message])
+
+    assert decision.source == "rules"
+    assert decision.response
+
+
 @pytest.mark.parametrize(
     "message",
     ["I have acidity and reflux", "I have heartburn", "I have had a fever since yesterday"],
