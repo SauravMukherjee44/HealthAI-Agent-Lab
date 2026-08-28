@@ -27,17 +27,32 @@
 
 ## Why this project exists
 
-The original 2020 project was a collection of independent disease classifiers. This rebuild turns that foundation into an interview-ready agentic AI system: natural-language intake, deterministic safety controls, constrained LLM orchestration, typed specialist tools, reproducible training, evidence-bound reports, evaluation harnesses, and cost-aware cloud operations.
+HealthAI explores a practical question: **how can an agentic health-research system remain private, auditable, inexpensive, and useful without outsourcing its intelligence to a hosted AI API?**
 
-It deliberately separates responsibilities:
+The project uses open-weight models because the inference boundary matters. Model weights run on infrastructure controlled by the project, prompts and transcripts are not sent to a third-party AI provider, model versions can be pinned, and behavior can be evaluated against a stable release. This creates an inspectable engineering system rather than a thin interface around an external API.
 
-- **Qwen handles language**, follow-up selection, and structured proposals.
-- **Deterministic policy handles authority**, emergency routing, validation, and fail-closed behavior.
-- **Specialist ONNX models handle numerical risk estimation** only when their required inputs are present.
-- **Moonshine handles speech recognition** without sending audio to an external AI provider.
-- **The browser handles anonymous chat history** so a page refresh does not erase the conversation.
+It also avoids asking one general-purpose LLM to solve every problem. Different parts of the workflow have different evidence and reliability requirements:
 
-That separation is the core engineering claim: an LLM is useful inside the system, but it is not permitted to become the system's clinical authority.
+| Layer | Model or mechanism | Why it owns this responsibility |
+|---|---|---|
+| Conversation | **Qwen3-0.6B Q8** | A small open-weight LLM is sufficient for natural language, follow-up selection, and constrained JSON proposals while remaining CPU-deployable. |
+| Voice | **Moonshine Tiny Streaming English 34M** | A focused open speech model provides private transcription without the cost or data boundary of a hosted voice API. |
+| Research screening | **Compact ONNX specialist models** | Structured health measurements benefit from reproducible, versioned estimators with explicit features, thresholds, and evaluation metadata. |
+| Safety and authorization | **Deterministic policy** | Emergency precedence, tool permissions, schema validation, and fail-closed behavior must not depend on generated prose. |
+| Anonymous continuity | **Browser-held state** | A useful session can survive refresh without requiring an account or creating a server-side clinical chat database. |
+
+This is why the system combines a small LLM with smaller research models instead of choosing between them. Qwen interprets language; specialist models estimate only the narrow outcomes they were trained for; deterministic code decides what is allowed to run. Each model is replaceable behind a typed boundary and must earn promotion through evaluation.
+
+### Open-weight by design
+
+- **No external AI API keys:** conversational, speech, and specialist inference run locally or inside the project’s AWS account.
+- **Version control over behavior:** exact model families, quantization, tool contracts, prompts, thresholds, and evaluation cases are visible in the repository.
+- **Cost proportional to usage:** compact CPU-oriented models fit scale-to-zero Lambda functions instead of requiring an always-on GPU endpoint.
+- **Research flexibility:** LoRA experiments, alternative specialist estimators, quantization, and routing policies can be tested without waiting for a hosted provider to expose them.
+- **Reduced vendor coupling:** Qwen, Moonshine, and ONNX tools communicate through project-owned interfaces and can be independently upgraded or replaced.
+- **Stronger privacy boundary:** health-related text and audio do not need to leave the controlled runtime for model inference.
+
+Open weights do not automatically make a model safe, clinically valid, or unbiased. HealthAI pairs them with provenance, bounded tool access, reproducible evaluation, explicit limitations, and deterministic safety controls. That combination—not model ownership alone—is the project’s core engineering thesis.
 
 ## Experience map
 
@@ -174,7 +189,7 @@ The registry returns capability status at runtime, so an unavailable artifact ca
 
 ## Model training
 
-All shipped specialist artifacts are compact ONNX pipelines committed with machine-readable metadata. Training code lives in `backend/training/` and downloads the original public datasets rather than relying on opaque pickles from the 2020 application.
+All shipped specialist artifacts are compact ONNX pipelines committed with machine-readable metadata. Training code lives in `backend/training/`, downloads the documented public datasets, and rebuilds each runtime artifact from source rather than relying on opaque serialized models.
 
 ### Dataset provenance
 
@@ -299,7 +314,7 @@ AI-disease-prediction/
 └── pyproject.toml
 ```
 
-The old Flask/Render/Vercel application, bundled database, uploaded example files, legacy pickles, and keep-awake automation have been removed. This repository now represents one architecture and one deployment path. CI is intentionally not configured; the documented quality gates run locally before a reviewed push.
+The repository contains one coherent architecture and one AWS deployment path. Generated caches, local environments, experimental adapters, compiled frontend assets, and user-provided media are excluded from version control. CI is intentionally not configured; the documented quality gates run locally before a reviewed push.
 
 ## Local development
 
