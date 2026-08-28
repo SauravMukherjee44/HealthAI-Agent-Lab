@@ -5,6 +5,7 @@ from typing import Any
 import numpy as np
 import onnxruntime as ort
 
+from .model_identity import model_identity
 from .registry import ASSESSMENTS, MODEL_CATALOG
 
 
@@ -43,6 +44,8 @@ class PredictionService:
             metadata = self.metadata(item.slug)
             if metadata:
                 data.update(
+                    name=metadata.get("display_name", data["name"]),
+                    release=metadata.get("release", data["release"]),
                     status=metadata.get("validation_status", "research"),
                     version=metadata.get("version", "unknown"),
                     metrics=metadata.get("metrics", {}),
@@ -86,6 +89,7 @@ class PredictionService:
         threshold = float(metadata["threshold"])
         return {
             "condition": condition,
+            "model_name": metadata.get("display_name", model_identity(condition).display_name),
             "band": "elevated" if probability >= threshold else "lower",
             "probability": round(probability, 4),
             "threshold": threshold,

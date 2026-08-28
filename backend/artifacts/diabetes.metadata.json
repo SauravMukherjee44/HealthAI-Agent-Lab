@@ -1,6 +1,8 @@
 {
   "slug": "diabetes",
-  "version": "diabetes-uci-candidate-selected-v2",
+  "display_name": "HealthAI Glyco 2.0",
+  "release": "2.0",
+  "version": "healthai-glyco-v2.0.0",
   "generated_at": "2026-08-27T09:41:01.999751+00:00",
   "validation_status": "research",
   "feature_order": [

@@ -29,6 +29,7 @@ type TriageResponse = {
 };
 type Prediction = {
   condition: string;
+  model_name: string;
   band: "lower" | "elevated" | "indeterminate";
   probability: number | null;
   model_version: string;
@@ -40,7 +41,9 @@ type ModelSummary = {
   slug: string;
   name: string;
   status: "validated" | "research" | "legacy" | "unavailable";
+  release: string;
   version: string;
+  base_model: string;
   description: string;
   metrics?: Record<string, number>;
 };
@@ -119,7 +122,7 @@ type VoiceButtonState = "ready" | "recording" | "transcribing" | "unavailable";
 
 const setVoiceButtonState = (state: VoiceButtonState) => {
   const content = {
-    ready: { icon: "mic", title: "Speak symptoms", detail: "Private · Moonshine ASR" },
+    ready: { icon: "mic", title: "Speak symptoms", detail: "HealthAI Voice 1.0 · private" },
     recording: { icon: "stop", title: "Stop recording", detail: "Listening · maximum 30 seconds" },
     transcribing: { icon: "graphic_eq", title: "Transcribing", detail: "On-device medical voice AI" },
     unavailable: { icon: "mic_off", title: "Voice unavailable", detail: "Run make dev-api-voice" },
@@ -152,10 +155,10 @@ const persistSession = () => {
 };
 
 const conditionNames: Record<string, string> = {
-  heart: "Heart risk",
-  diabetes: "Early diabetes signs",
-  kidney: "Kidney-disease pattern",
-  liver: "Liver-disease pattern",
+  heart: "HealthAI Cardio 2.0",
+  diabetes: "HealthAI Glyco 2.0",
+  kidney: "HealthAI Renal 2.0",
+  liver: "HealthAI Hepatic 2.0",
 };
 const conditionLabel = (condition?: string | null) => condition ? conditionNames[condition] ?? condition : "Pending";
 
@@ -371,7 +374,7 @@ chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = messageInput.value.trim();
   if (!text) return;
-  lastInputChannel = messageInput.dataset.inputChannel === "voice" ? "Voice · Moonshine ASR" : "Text";
+  lastInputChannel = messageInput.dataset.inputChannel === "voice" ? "Voice · HealthAI Voice 1.0" : "Text";
   delete messageInput.dataset.inputChannel;
   addMessage(text, "user");
   messageInput.value = "";
@@ -470,7 +473,7 @@ const renderResult = (result: Prediction) => {
   pipelineState.textContent = "Screening verified";
   setStage(3, "complete");
   selectStageButton("verification");
-  triagePanel.innerHTML = `<article class="triage-route result-summary"><span class="material-symbols-outlined">fact_check</span><small>Screening complete</small><h3>${result.band === "elevated" ? "Elevated pattern" : "No elevated pattern"}</h3><p>${probability}. This is a research output, not a diagnosis.</p><ul><li>${escapeHtml(result.model_version)}</li><li>${escapeHtml(result.validation_status)}</li><li>PDF and Excel provenance available</li></ul></article>`;
+  triagePanel.innerHTML = `<article class="triage-route result-summary"><span class="material-symbols-outlined">fact_check</span><small>${escapeHtml(result.model_name)} · screening complete</small><h3>${result.band === "elevated" ? "Elevated pattern" : "No elevated pattern"}</h3><p>${probability}. This is a research output, not a diagnosis.</p><ul><li>${escapeHtml(result.model_version)}</li><li>${escapeHtml(result.validation_status)}</li><li>PDF and Excel provenance available</li></ul></article>`;
 };
 
 xrayButton.addEventListener("click", () => xrayInput.click());
@@ -620,7 +623,7 @@ voiceButton.addEventListener("click", async () => {
 });
 
 const uploadVoice = async (blob: Blob) => {
-  setBusy(true, "Transcribing privately with Moonshine ASR…");
+  setBusy(true, "Transcribing privately with HealthAI Voice 1.0…");
   let transcriptReady = false;
   try {
     const wav = await convertRecordingToWav(blob);
@@ -632,7 +635,7 @@ const uploadVoice = async (blob: Blob) => {
     messageInput.value = result.transcript;
     messageInput.dataset.inputChannel = "voice";
     messageInput.focus();
-    lastInputChannel = "Voice · Moonshine ASR";
+    lastInputChannel = "Voice · HealthAI Voice 1.0";
     pipelineState.textContent = "Transcript ready for review";
     renderTrace("Guarded", null, "Transcript not sent yet");
     transcriptReady = true;
@@ -666,13 +669,13 @@ type ModelExperience = {
 };
 
 const modelExperiences: ModelExperience[] = [
-  { slug: "heart", name: "Heart risk", family: "Cardiovascular research", category: "screening", icon: "cardiology", accent: "coral", version: "ONNX · v2", summary: "A compact tabular pipeline that evaluates reviewed cardiovascular measurements against the UCI Statlog research baseline.", input: "13 clinical measurements", output: "Bounded pattern score", workflow: ["Validate 13 inputs", "Run ONNX pipeline", "Apply versioned threshold", "Attach provenance"] },
-  { slug: "diabetes", name: "Early diabetes signs", family: "Metabolic research", category: "screening", icon: "water_drop", accent: "amber", version: "ONNX · v2", summary: "A symptom-questionnaire model for exploring early-diabetes-associated patterns with explicit human-confirmed evidence.", input: "16 symptom fields", output: "Bounded pattern score", workflow: ["Review symptom evidence", "Encode explicit answers", "Run ONNX pipeline", "Explain limitations"] },
-  { slug: "kidney", name: "Kidney pattern", family: "Renal research", category: "screening", icon: "nephrology", accent: "blue", version: "ONNX · v2", summary: "A laboratory-heavy CKD research workflow with strict completeness checks and explicit missing-value handling.", input: "24 clinical and lab fields", output: "Bounded pattern score", workflow: ["Confirm lab values", "Validate all 24 fields", "Run ONNX pipeline", "Verify result boundary"] },
-  { slug: "liver", name: "Liver pattern", family: "Hepatic research", category: "screening", icon: "gastroenterology", accent: "violet", version: "ONNX · v2", summary: "A compact ILPD baseline that consumes reviewed demographic and laboratory measurements without free-form inference.", input: "10 demographic and lab fields", output: "Bounded pattern score", workflow: ["Review laboratory panel", "Validate measurement range", "Run ONNX pipeline", "Surface cohort limits"] },
-  { slug: "pneumonia", name: "Pneumonia X-ray", family: "Experimental imaging", category: "imaging", icon: "radiology", accent: "cyan", version: "ONNX · v1", summary: "A reproducible PneumoniaMNIST image baseline for pediatric benchmark exploration—not a radiology or adult diagnostic tool.", input: "Reviewed pediatric X-ray", output: "Experimental image score", workflow: ["Confirm image boundary", "Crop and reduce to 28×28", "Run ONNX baseline", "Show imaging limits"] },
-  { slug: "qwen", name: "Qwen3-0.6B / LoRA Lab", family: "Open language reasoner", category: "language", icon: "forum", accent: "mint", version: "Q8 GGUF · hybrid", summary: "The private language layer for conversation and constrained tool proposals. LoRA adapters remain evaluation candidates until they beat the hybrid baseline.", input: "Natural language", output: "Policy-checked JSON proposal", workflow: ["Read user language", "Propose bounded action", "Validate JSON contract", "Use deterministic authority"] },
-  { slug: "moonshine", name: "Moonshine Voice", family: "Open speech model", category: "language", icon: "graphic_eq", accent: "rose", version: "34M · streaming", summary: "A small self-hosted English ASR model that turns a short recording into an editable transcript before the agent sees it.", input: "16 kHz mono audio", output: "Reviewable transcript", workflow: ["Capture short recording", "Transcribe privately", "Review the transcript", "Send confirmed text"] },
+  { slug: "heart", name: "HealthAI Cardio 2.0", family: "Cardiovascular research", category: "screening", icon: "cardiology", accent: "coral", version: "healthai-cardio-v2.0.0", summary: "A compact tabular pipeline that evaluates reviewed cardiovascular measurements against the UCI Statlog research baseline.", input: "13 clinical measurements", output: "Bounded pattern score", workflow: ["Validate 13 inputs", "Run ONNX pipeline", "Apply versioned threshold", "Attach provenance"] },
+  { slug: "diabetes", name: "HealthAI Glyco 2.0", family: "Metabolic research", category: "screening", icon: "water_drop", accent: "amber", version: "healthai-glyco-v2.0.0", summary: "A symptom-questionnaire model for exploring early-diabetes-associated patterns with explicit human-confirmed evidence.", input: "16 symptom fields", output: "Bounded pattern score", workflow: ["Review symptom evidence", "Encode explicit answers", "Run ONNX pipeline", "Explain limitations"] },
+  { slug: "kidney", name: "HealthAI Renal 2.0", family: "Renal research", category: "screening", icon: "nephrology", accent: "blue", version: "healthai-renal-v2.0.0", summary: "A laboratory-heavy CKD research workflow with strict completeness checks and explicit missing-value handling.", input: "24 clinical and lab fields", output: "Bounded pattern score", workflow: ["Confirm lab values", "Validate all 24 fields", "Run ONNX pipeline", "Verify result boundary"] },
+  { slug: "liver", name: "HealthAI Hepatic 2.0", family: "Hepatic research", category: "screening", icon: "gastroenterology", accent: "violet", version: "healthai-hepatic-v2.0.0", summary: "A compact ILPD baseline that consumes reviewed demographic and laboratory measurements without free-form inference.", input: "10 demographic and lab fields", output: "Bounded pattern score", workflow: ["Review laboratory panel", "Validate measurement range", "Run ONNX pipeline", "Surface cohort limits"] },
+  { slug: "pneumonia", name: "HealthAI PulmoVision 1.0", family: "Experimental imaging", category: "imaging", icon: "radiology", accent: "cyan", version: "healthai-pulmovision-v1.0.0", summary: "A reproducible PneumoniaMNIST image baseline for pediatric benchmark exploration—not a radiology or adult diagnostic tool.", input: "Reviewed pediatric X-ray", output: "Experimental image score", workflow: ["Confirm image boundary", "Crop and reduce to 28×28", "Run ONNX baseline", "Show imaging limits"] },
+  { slug: "qwen", name: "HealthAI Reasoner 1.0", family: "Open language reasoner", category: "language", icon: "forum", accent: "mint", version: "Qwen3-0.6B Q8 · LoRA 1.1 candidate", summary: "The private language layer, powered by Qwen3-0.6B, for conversation and constrained tool proposals. LoRA adapters remain evaluation candidates until they beat the hybrid baseline.", input: "Natural language", output: "Policy-checked JSON proposal", workflow: ["Read user language", "Propose bounded action", "Validate JSON contract", "Use deterministic authority"] },
+  { slug: "moonshine", name: "HealthAI Voice 1.0", family: "Open speech model", category: "language", icon: "graphic_eq", accent: "rose", version: "Moonshine 34M · streaming", summary: "A small self-hosted English ASR model, powered by Moonshine, that turns a short recording into an editable transcript before the agent sees it.", input: "16 kHz mono audio", output: "Reviewable transcript", workflow: ["Capture short recording", "Transcribe privately", "Review the transcript", "Send confirmed text"] },
 ];
 
 let runtimeModelCatalog: ModelSummary[] = [];
@@ -688,8 +691,8 @@ const runtimeModel = (slug: string) => runtimeModelCatalog.find((model) => model
 const runtimeTool = (slug: string) => runtimeTools.find((tool) => tool.slug === `${slug}_risk` || (slug === "pneumonia" && tool.slug === "pneumonia_xray"));
 
 const modelStatus = (model: ModelExperience) => {
-  if (model.slug === "qwen") return qwenRuntimeAvailable ? "Qwen active" : "Rules fallback";
-  if (model.slug === "moonshine") return voiceRuntimeAvailable ? "Voice ready" : "Voice service offline";
+  if (model.slug === "qwen") return qwenRuntimeAvailable ? "Reasoner active" : "Rules fallback";
+  if (model.slug === "moonshine") return voiceRuntimeAvailable ? "Voice 1.0 ready" : "Voice service offline";
   const tool = runtimeTool(model.slug);
   if (!runtimeTools.length) return "Checking runtime";
   return tool?.callable ? (tool.deployment_status === "experimental" ? "Experimental" : "Callable") : "Unavailable";
@@ -756,7 +759,7 @@ const renderPneumoniaPlayground = (model: ModelExperience) => {
 };
 
 const renderQwenPlayground = (model: ModelExperience) => {
-  playgroundStage.innerHTML = `<div class="playground-head"><div><span>Language-model workflow</span><h3>From natural language to a bounded proposal</h3></div><span class="arena-level-chip ${qwenRuntimeAvailable ? "ready" : ""}">${qwenRuntimeAvailable ? "Qwen active" : "Deterministic fallback active"}</span></div>
+  playgroundStage.innerHTML = `<div class="playground-head"><div><span>HealthAI Reasoner 1.0 · powered by Qwen3-0.6B</span><h3>From natural language to a bounded proposal</h3></div><span class="arena-level-chip ${qwenRuntimeAvailable ? "ready" : ""}">${qwenRuntimeAvailable ? "Reasoner active" : "Deterministic fallback active"}</span></div>
     <div class="reasoner-demo"><div class="reasoner-pipeline"><article><i>01</i><span class="material-symbols-outlined">chat</span><strong>Natural language</strong><small>User describes a concern</small></article><b>→</b><article><i>02</i><span class="material-symbols-outlined">data_object</span><strong>Qwen proposal</strong><small>Constrained JSON only</small></article><b>→</b><article><i>03</i><span class="material-symbols-outlined">policy</span><strong>Policy check</strong><small>Deterministic authority</small></article><b>→</b><article><i>04</i><span class="material-symbols-outlined">route</span><strong>Allowed action</strong><small>Respond, ask or route</small></article></div>
     <div class="adapter-note"><span class="material-symbols-outlined">experiment</span><div><strong>Fine-tuning is visible, but not silently promoted.</strong><p>The LoRA track improves contract learning through versioned examples. Current adapters remain candidates because direct-routing accuracy has not beaten the tested hybrid.</p></div></div>
     <label class="reasoner-prompt"><span>Try a natural-language concern</span><textarea id="qwen-model-prompt" rows="3">I have been unusually thirsty and urinating often. Which research workflow fits?</textarea></label><button class="button models-primary" type="button" id="open-qwen-agent">Continue in live agent <span>→</span></button></div>`;
@@ -769,7 +772,7 @@ const renderQwenPlayground = (model: ModelExperience) => {
 };
 
 const renderMoonshinePlayground = (model: ModelExperience) => {
-  playgroundStage.innerHTML = `<div class="playground-head"><div><span>Speech-model workflow</span><h3>Experience private medical voice AI</h3></div><span class="arena-level-chip ${voiceRuntimeAvailable ? "ready" : ""}">${voiceRuntimeAvailable ? "Moonshine ready" : "Voice runtime offline"}</span></div>
+  playgroundStage.innerHTML = `<div class="playground-head"><div><span>HealthAI Voice 1.0 · powered by Moonshine 34M</span><h3>Experience private medical voice AI</h3></div><span class="arena-level-chip ${voiceRuntimeAvailable ? "ready" : ""}">${voiceRuntimeAvailable ? "Voice 1.0 ready" : "Voice runtime offline"}</span></div>
     <div class="voice-model-demo"><div class="voice-demo-orb"><span class="material-symbols-outlined">graphic_eq</span>${Array.from({length: 18}, (_, index) => `<i style="--bar:${index}"></i>`).join("")}</div><h4>34 million parameters. One focused job.</h4><p>Moonshine transcribes a short English recording inside the controlled runtime. The transcript always returns to the composer for human review before orchestration.</p><div class="voice-demo-path"><span><i>1</i>Speak</span><b></b><span><i>2</i>Transcribe privately</span><b></b><span><i>3</i>Review text</span><b></b><span><i>4</i>Send</span></div><button class="button models-primary" type="button" id="open-voice-agent" ${voiceRuntimeAvailable ? "" : "disabled"}>${voiceRuntimeAvailable ? "Open voice experience" : "Voice service is offline"} <span>→</span></button></div>`;
   playgroundStage.querySelector<HTMLButtonElement>("#open-voice-agent")!.addEventListener("click", () => {
     showView("assessment");
@@ -811,7 +814,7 @@ const renderModelThinking = (model: ModelExperience) => {
 const renderPlaygroundResult = (model: ModelExperience, result: Prediction) => {
   const score = result.probability === null ? 0 : Math.round(result.probability * 100);
   const elevated = result.band === "elevated";
-  playgroundStage.innerHTML = `<div class="arena-result ${result.band}">${Array.from({length: 14}, (_, index) => `<i class="result-spark" style="--spark:${index}"></i>`).join("")}<div class="result-score-ring" style="--score:${score}"><div><strong>${result.probability === null ? "—" : `${score}%`}</strong><small>model score</small></div></div><div class="arena-result-copy"><span class="result-unlocked"><i class="material-symbols-outlined">verified</i> Research result unlocked</span><h3>${elevated ? "Elevated pattern identified" : "No elevated pattern identified"}</h3><p>This model output can be wrong and does not establish or rule out a condition. Review its dataset boundary before interpreting the score.</p><div class="result-provenance"><span><small>Model</small><strong>${escapeHtml(result.model_version)}</strong></span><span><small>Status</small><strong>${escapeHtml(result.validation_status)}</strong></span><span><small>Pipeline</small><strong>Verified ONNX</strong></span></div><div class="arena-result-actions"><button class="button models-primary" type="button" data-model-export="pdf">Download PDF</button><button class="button secondary" type="button" data-model-export="xlsx">Download Excel</button><button class="model-run-again" type="button">Run again ↻</button></div></div></div>`;
+  playgroundStage.innerHTML = `<div class="arena-result ${result.band}">${Array.from({length: 14}, (_, index) => `<i class="result-spark" style="--spark:${index}"></i>`).join("")}<div class="result-score-ring" style="--score:${score}"><div><strong>${result.probability === null ? "—" : `${score}%`}</strong><small>model score</small></div></div><div class="arena-result-copy"><span class="result-unlocked"><i class="material-symbols-outlined">verified</i> ${escapeHtml(result.model_name)} result unlocked</span><h3>${elevated ? "Elevated pattern identified" : "No elevated pattern identified"}</h3><p>This model output can be wrong and does not establish or rule out a condition. Review its dataset boundary before interpreting the score.</p><div class="result-provenance"><span><small>Model</small><strong>${escapeHtml(result.model_name)}</strong><small>${escapeHtml(result.model_version)}</small></span><span><small>Status</small><strong>${escapeHtml(result.validation_status)}</strong></span><span><small>Pipeline</small><strong>Verified ONNX</strong></span></div><div class="arena-result-actions"><button class="button models-primary" type="button" data-model-export="pdf">Download PDF</button><button class="button secondary" type="button" data-model-export="xlsx">Download Excel</button><button class="model-run-again" type="button">Run again ↻</button></div></div></div>`;
   playgroundStage.querySelectorAll<HTMLButtonElement>("[data-model-export]").forEach((button) => button.addEventListener("click", () => void downloadReport(button.dataset.modelExport!)));
   playgroundStage.querySelector<HTMLButtonElement>(".model-run-again")!.addEventListener("click", () => void selectModelExperience(model.slug, false));
 };
@@ -877,7 +880,7 @@ const renderRegistry = (models: ModelSummary[], tools: ToolSummary[], voiceAvail
     const architecture = model.slug === "pneumonia" ? "Legacy Keras CNN" : "Legacy pickle";
     return `<tr><td><strong>${escapeHtml(model.name)}</strong><small class="table-note">${escapeHtml(model.description)}</small></td><td>${architecture}<small class="table-note">${escapeHtml(model.version)}</small></td><td>Provenance only</td><td>Not loaded</td><td><span class="status-chip danger">Blocked legacy</span></td></tr>`;
   }).join("");
-  registryBody.innerHTML = `${toolRows}${blockedRows}<tr><td><strong>Moonshine ASR</strong><small class="table-note">Tiny Streaming English model</small></td><td>34M streaming</td><td>Reviewed voice transcript</td><td>Local CPU service</td><td><span class="status-chip ${voiceAvailable ? "success" : ""}">${voiceAvailable ? "Available" : "Separate service"}</span></td></tr><tr><td><strong>Qwen3-0.6B</strong><small class="table-note">Constrained JSON routing with deterministic fallback</small></td><td>Q8 GGUF · llama.cpp</td><td>Conversation, extraction and tool proposals</td><td>Docker Model Runner</td><td><span class="status-chip ${qwenAvailable ? "success" : ""}">${qwenAvailable ? "Active locally" : "Rules fallback"}</span></td></tr>`;
+  registryBody.innerHTML = `${toolRows}${blockedRows}<tr><td><strong>HealthAI Voice 1.0</strong><small class="table-note">Powered by Moonshine Tiny Streaming English 34M</small></td><td>healthai-voice-v1.0.0</td><td>Reviewed voice transcript</td><td>Local CPU service</td><td><span class="status-chip ${voiceAvailable ? "success" : ""}">${voiceAvailable ? "Available" : "Separate service"}</span></td></tr><tr><td><strong>HealthAI Reasoner 1.0</strong><small class="table-note">Powered by Qwen3-0.6B Q8 · constrained routing</small></td><td>healthai-reasoner-v1.0.0</td><td>Conversation, extraction and tool proposals</td><td>Docker Model Runner</td><td><span class="status-chip ${qwenAvailable ? "success" : ""}">${qwenAvailable ? "Active locally" : "Rules fallback"}</span></td></tr>`;
 };
 
 const loadRuntimeEvidence = async () => {
@@ -916,7 +919,7 @@ const loadRuntimeEvidence = async () => {
     setRuntimeBadge(registryRuntime, "ready", `${tools.length} registered · ${callable.length} callable`);
     if (health.voice_available) {
       setVoiceButtonState("ready");
-      voiceButton.setAttribute("aria-label", "Record medical symptoms for up to 30 seconds using local Moonshine ASR");
+      voiceButton.setAttribute("aria-label", "Record medical symptoms for up to 30 seconds using HealthAI Voice 1.0");
     } else {
       setVoiceButtonState("unavailable");
       voiceButton.setAttribute("aria-label", "Moonshine voice runs as a separate service and is not attached to this local API");

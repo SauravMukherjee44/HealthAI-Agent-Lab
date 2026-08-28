@@ -50,13 +50,14 @@ def build_pdf(report: dict[str, Any], alias: str | None) -> bytes:
         Paragraph("Health<span color='#16a67a'>AI</span>", brand),
         Paragraph("Agent Lab · Educational screening report", body),
         Spacer(1, 7 * mm),
-        Paragraph(f"{_display_name(report['condition'])} screening", styles["Heading1"]),
+        Paragraph(report.get("model_name", _display_name(report["condition"])), styles["Heading1"]),
     ]
     summary = [
         ["Prepared for", alias or "Anonymous"],
         ["Generated", datetime.now(UTC).strftime("%d %b %Y, %H:%M UTC")],
         ["Screening band", report["band"].title()],
-        ["Model version", report["model_version"]],
+        ["Model", report.get("model_name", _display_name(report["condition"]))],
+        ["Release ID", report["model_version"]],
         ["Validation status", report["validation_status"].title()],
     ]
     table = Table(summary, colWidths=[42 * mm, 110 * mm])
@@ -134,11 +135,11 @@ def build_xlsx(report: dict[str, Any], alias: str | None) -> bytes:
     summary.write("A1", "HealthAI Screening Report", title)
     summary_rows = [
         ("Prepared for", alias or "Anonymous"),
-        ("Condition", _display_name(report["condition"])),
+        ("Model", report.get("model_name", _display_name(report["condition"]))),
         ("Screening band", report["band"].title()),
         ("Probability", report.get("probability")),
         ("Threshold", report.get("threshold")),
-        ("Model version", report["model_version"]),
+        ("Release ID", report["model_version"]),
         ("Validation status", report["validation_status"]),
     ]
     for row, (label, value) in enumerate(summary_rows, start=2):
@@ -158,11 +159,12 @@ def build_xlsx(report: dict[str, Any], alias: str | None) -> bytes:
     provenance.set_column("A:A", 28)
     provenance.set_column("B:B", 90)
     provenance.write_row(0, 0, ["Item", "Details"], header)
-    provenance.write_row(1, 0, ["Model version", report["model_version"]], cell)
-    provenance.write_row(2, 0, ["Validation status", report["validation_status"]], cell)
-    provenance.write_row(3, 0, ["Dataset", str(report.get("dataset", {}))], cell)
-    for row, limitation in enumerate(report.get("limitations", []), start=4):
-        provenance.write(row, 0, f"Limitation {row - 3}", header)
+    provenance.write_row(1, 0, ["Model", report.get("model_name", _display_name(report["condition"]))], cell)
+    provenance.write_row(2, 0, ["Release ID", report["model_version"]], cell)
+    provenance.write_row(3, 0, ["Validation status", report["validation_status"]], cell)
+    provenance.write_row(4, 0, ["Dataset", str(report.get("dataset", {}))], cell)
+    for row, limitation in enumerate(report.get("limitations", []), start=5):
+        provenance.write(row, 0, f"Limitation {row - 4}", header)
         provenance.write(row, 1, limitation, cell)
     workbook.close()
     return buffer.getvalue()

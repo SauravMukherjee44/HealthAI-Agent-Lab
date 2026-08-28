@@ -6,6 +6,7 @@ import numpy as np
 import onnxruntime as ort
 from PIL import Image, UnidentifiedImageError
 
+from .model_identity import model_identity
 from .predictions import ModelUnavailable
 
 
@@ -54,6 +55,7 @@ class ImagePredictionService:
         threshold = float(metadata["threshold"])
         return {
             "condition": "pneumonia",
+            "model_name": metadata.get("display_name", model_identity("pneumonia").display_name),
             "band": "elevated" if probability >= threshold else "lower",
             "probability": round(probability, 4),
             "threshold": threshold,

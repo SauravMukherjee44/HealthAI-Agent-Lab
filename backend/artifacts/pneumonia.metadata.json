@@ -1,6 +1,8 @@
 {
   "slug": "pneumonia",
-  "version": "pneumoniamnist-logistic-v1",
+  "display_name": "HealthAI PulmoVision 1.0",
+  "release": "1.0",
+  "version": "healthai-pulmovision-v1.0.0",
   "generated_at": "2026-08-27T10:44:09.190134+00:00",
   "validation_status": "research",
   "feature_order": [

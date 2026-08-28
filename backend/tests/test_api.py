@@ -19,6 +19,18 @@ def test_health_endpoint():
     assert response.json()["status"] == "healthy"
 
 
+def test_model_catalog_uses_canonical_versioned_names():
+    response = client.get("/api/v1/models")
+    assert response.status_code == 200
+    models = {model["slug"]: model for model in response.json()["models"]}
+    assert models["heart"]["name"] == "HealthAI Cardio 2.0"
+    assert models["heart"]["version"] == "healthai-cardio-v2.0.0"
+    assert models["diabetes"]["name"] == "HealthAI Glyco 2.0"
+    assert models["kidney"]["name"] == "HealthAI Renal 2.0"
+    assert models["liver"]["name"] == "HealthAI Hepatic 2.0"
+    assert models["pneumonia"]["name"] == "HealthAI PulmoVision 1.0"
+
+
 def test_tool_registry_exposes_only_artifact_backed_tools_as_callable():
     response = client.get("/api/v1/tools")
     assert response.status_code == 200
@@ -362,6 +374,8 @@ def test_prediction_and_report_exports_work_end_to_end():
     assert prediction.status_code == 200
     result = prediction.json()
     assert result["condition"] == "heart"
+    assert result["model_name"] == "HealthAI Cardio 2.0"
+    assert result["model_version"] == "healthai-cardio-v2.0.0"
     assert result["validation_status"] == "research"
     assert 0 <= result["probability"] <= 1
     assert result["report_token"]

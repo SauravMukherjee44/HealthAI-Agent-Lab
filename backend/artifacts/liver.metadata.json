@@ -1,6 +1,8 @@
 {
   "slug": "liver",
-  "version": "liver-uci-candidate-selected-v2",
+  "display_name": "HealthAI Hepatic 2.0",
+  "release": "2.0",
+  "version": "healthai-hepatic-v2.0.0",
   "generated_at": "2026-08-27T09:41:07.350597+00:00",
   "validation_status": "research",
   "feature_order": [

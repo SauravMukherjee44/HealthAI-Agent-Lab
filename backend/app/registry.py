@@ -1,3 +1,4 @@
+from .model_identity import model_identity
 from .schemas import AssessmentField, FieldOption, ModelSummary
 
 YES_NO = [FieldOption(value=0, label="No"), FieldOption(value=1, label="Yes")]
@@ -209,54 +210,66 @@ KIDNEY_FIELDS = [
 
 
 ASSESSMENTS = {
-    "heart": {"name": "Heart risk", "fields": HEART_FIELDS},
-    "diabetes": {"name": "Early diabetes signs", "fields": DIABETES_FIELDS},
-    "kidney": {"name": "Chronic kidney disease pattern", "fields": KIDNEY_FIELDS},
-    "liver": {"name": "Liver disease pattern", "fields": LIVER_FIELDS},
+    "heart": {"name": model_identity("heart").display_name, "fields": HEART_FIELDS},
+    "diabetes": {"name": model_identity("diabetes").display_name, "fields": DIABETES_FIELDS},
+    "kidney": {"name": model_identity("kidney").display_name, "fields": KIDNEY_FIELDS},
+    "liver": {"name": model_identity("liver").display_name, "fields": LIVER_FIELDS},
 }
 
 
 MODEL_CATALOG = [
     ModelSummary(
         slug="heart",
-        name="Heart risk",
+        name=model_identity("heart").display_name,
         status="unavailable",
-        version="training-required",
+        release=model_identity("heart").release,
+        version=model_identity("heart").release_id,
+        base_model=model_identity("heart").base_model,
         description="UCI Statlog Heart baseline with a versioned 13-field schema; callable only when its validated ONNX artifact is present.",
     ),
     ModelSummary(
         slug="diabetes",
-        name="Early diabetes signs",
+        name=model_identity("diabetes").display_name,
         status="unavailable",
-        version="training-required",
+        release=model_identity("diabetes").release,
+        version=model_identity("diabetes").release_id,
+        base_model=model_identity("diabetes").base_model,
         description="UCI early-stage diabetes symptom baseline with 16 explicit inputs; callable only when its validated ONNX artifact is present.",
     ),
     ModelSummary(
         slug="kidney",
-        name="Kidney disease",
+        name=model_identity("kidney").display_name,
         status="unavailable",
-        version="training-required",
+        release=model_identity("kidney").release,
+        version=model_identity("kidney").release_id,
+        base_model=model_identity("kidney").base_model,
         description="UCI CKD research baseline with 24 explicit clinical and laboratory inputs.",
     ),
     ModelSummary(
         slug="liver",
-        name="Liver disease",
+        name=model_identity("liver").display_name,
         status="unavailable",
-        version="training-required",
+        release=model_identity("liver").release,
+        version=model_identity("liver").release_id,
+        base_model=model_identity("liver").base_model,
         description="UCI ILPD research baseline with 10 explicit demographic and laboratory inputs.",
     ),
     ModelSummary(
         slug="stroke",
-        name="Stroke risk",
+        name=model_identity("stroke").display_name,
         status="legacy",
-        version="2020-legacy",
+        release=model_identity("stroke").release,
+        version=model_identity("stroke").release_id,
+        base_model=model_identity("stroke").base_model,
         description="Historical pickle retained for provenance; not available to the agent.",
     ),
     ModelSummary(
         slug="pneumonia",
-        name="Pneumonia X-ray",
+        name=model_identity("pneumonia").display_name,
         status="unavailable",
-        version="training-required",
+        release=model_identity("pneumonia").release,
+        version=model_identity("pneumonia").release_id,
+        base_model=model_identity("pneumonia").base_model,
         description="Pediatric PneumoniaMNIST image baseline; callable only with its reproducible ONNX artifact.",
     ),
 ]

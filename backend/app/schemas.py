@@ -96,6 +96,7 @@ class PredictionRequest(BaseModel):
 
 class PredictionResult(BaseModel):
     condition: str
+    model_name: str
     band: Literal["lower", "elevated", "indeterminate"]
     probability: float | None
     threshold: float | None
@@ -122,6 +123,8 @@ class ModelSummary(BaseModel):
     slug: str
     name: str
     status: Literal["validated", "research", "legacy", "unavailable"]
+    release: str
     version: str
+    base_model: str
     description: str
     metrics: dict[str, float | int | str] = Field(default_factory=dict)

@@ -18,6 +18,8 @@ from skl2onnx import convert_sklearn
 from skl2onnx.common.data_types import FloatTensorType
 from sklearn.linear_model import LogisticRegression
 
+from backend.app.model_identity import model_identity
+
 from .train_models import choose_threshold, metrics
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -99,7 +101,9 @@ def train(output_dir: Path) -> dict:
     (output_dir / "pneumonia.onnx").write_bytes(converted.SerializeToString())
     metadata = {
         "slug": "pneumonia",
-        "version": "pneumoniamnist-logistic-v1",
+        "display_name": model_identity("pneumonia").display_name,
+        "release": model_identity("pneumonia").release,
+        "version": model_identity("pneumonia").release_id,
         "generated_at": datetime.now(UTC).isoformat(),
         "validation_status": "research",
         "feature_order": ["28x28_grayscale_pixels"],

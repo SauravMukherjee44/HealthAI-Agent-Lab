@@ -35,8 +35,8 @@ It also avoids asking one general-purpose LLM to solve every problem. Different 
 
 | Layer | Model or mechanism | Why it owns this responsibility |
 |---|---|---|
-| Conversation | **Qwen3-0.6B Q8** | A small open-weight LLM is sufficient for natural language, follow-up selection, and constrained JSON proposals while remaining CPU-deployable. |
-| Voice | **Moonshine Tiny Streaming English 34M** | A focused open speech model provides private transcription without the cost or data boundary of a hosted voice API. |
+| Conversation | **HealthAI Reasoner 1.0** · powered by Qwen3-0.6B Q8 | A small open-weight LLM is sufficient for natural language, follow-up selection, and constrained JSON proposals while remaining CPU-deployable. |
+| Voice | **HealthAI Voice 1.0** · powered by Moonshine Tiny Streaming English 34M | A focused open speech model provides private transcription without the cost or data boundary of a hosted voice API. |
 | Research screening | **Compact ONNX specialist models** | Structured health measurements benefit from reproducible, versioned estimators with explicit features, thresholds, and evaluation metadata. |
 | Safety and authorization | **Deterministic policy** | Emergency precedence, tool permissions, schema validation, and fail-closed behavior must not depend on generated prose. |
 | Anonymous continuity | **Browser-held state** | A useful session can survive refresh without requiring an account or creating a server-side clinical chat database. |
@@ -53,6 +53,29 @@ This is why the system combines a small LLM with smaller research models instead
 - **Stronger privacy boundary:** health-related text and audio do not need to leave the controlled runtime for model inference.
 
 Open weights do not automatically make a model safe, clinically valid, or unbiased. HealthAI pairs them with provenance, bounded tool access, reproducible evaluation, explicit limitations, and deterministic safety controls. That combination—not model ownership alone—is the project’s core engineering thesis.
+
+## Model identity and releases
+
+Every model follows one durable public naming system: **`HealthAI <Capability> <major.minor>`**. The friendly name is used throughout the UI and reports; a machine-readable release ID such as `healthai-cardio-v2.0.0` travels in API responses and provenance. Stable API slugs such as `heart` and `heart_risk` do not change when a model is upgraded.
+
+| Public model | Technical release | Powered by / trained on | Current gate |
+|---|---|---|---|
+| **HealthAI Cardio 2.0** | `healthai-cardio-v2.0.0` | UCI Statlog Heart · selected ONNX pipeline | Research |
+| **HealthAI Glyco 2.0** | `healthai-glyco-v2.0.0` | UCI Early Stage Diabetes · selected ONNX pipeline | Research |
+| **HealthAI Renal 2.0** | `healthai-renal-v2.0.0` | UCI Chronic Kidney Disease · selected ONNX pipeline | Research |
+| **HealthAI Hepatic 2.0** | `healthai-hepatic-v2.0.0` | UCI Indian Liver Patient · selected ONNX pipeline | Research |
+| **HealthAI PulmoVision 1.0** | `healthai-pulmovision-v1.0.0` | PneumoniaMNIST · logistic ONNX baseline | Experimental research |
+| **HealthAI Reasoner 1.0** | `healthai-reasoner-v1.0.0` | Qwen3-0.6B Q8 · llama.cpp | Hybrid runtime; LoRA 1.1 remains a candidate |
+| **HealthAI Voice 1.0** | `healthai-voice-v1.0.0` | Moonshine Tiny Streaming English 34M | English ASR |
+| **HealthAI Neuro 0.1** | `healthai-neuro-v0.1.0` | Retired legacy artifact | Blocked; provenance only |
+
+Release increments have explicit meaning:
+
+- **Major** — an incompatible dataset, feature schema, model family, or input/output contract change.
+- **Minor** — compatible retraining, recalibration, threshold change, or promoted adapter with new measured behavior.
+- **Patch** — packaging, metadata, conversion, or runtime correction expected to preserve predictions.
+
+Research status is not encoded into the model name. `research`, `experimental`, `candidate`, and `blocked` are independent registry gates, so a polished version label can never be mistaken for clinical validation. Open-model attribution is also mandatory: HealthAI owns the orchestration and release contract, while Qwen and Moonshine remain visibly credited as the underlying open-weight models.
 
 ## Experience map
 

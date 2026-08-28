@@ -29,6 +29,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from ucimlrepo import fetch_ucirepo
 
+from backend.app.model_identity import model_identity
+
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT = ROOT / "backend" / "artifacts"
 os.environ.setdefault("SSL_CERT_FILE", certifi.where())
@@ -329,7 +331,9 @@ def train_one(spec, output_dir: Path):
     (output_dir / f"{slug}.onnx").write_bytes(converted.SerializeToString())
     metadata = {
         "slug": slug,
-        "version": f"{slug}-uci-candidate-selected-v2",
+        "display_name": model_identity(slug).display_name,
+        "release": model_identity(slug).release,
+        "version": model_identity(slug).release_id,
         "generated_at": datetime.now(UTC).isoformat(),
         "validation_status": validation_status,
         "feature_order": feature_order,

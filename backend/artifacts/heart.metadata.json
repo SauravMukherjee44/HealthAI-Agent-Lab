@@ -1,6 +1,8 @@
 {
   "slug": "heart",
-  "version": "heart-uci-candidate-selected-v2",
+  "display_name": "HealthAI Cardio 2.0",
+  "release": "2.0",
+  "version": "healthai-cardio-v2.0.0",
   "generated_at": "2026-08-27T09:40:59.111491+00:00",
   "validation_status": "research",
   "feature_order": [

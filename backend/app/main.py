@@ -186,7 +186,9 @@ async def transcribe_voice(audio: Annotated[UploadFile, File()]):
     return {
         "transcript": transcript,
         "requires_confirmation": True,
-        "model": "moonshine-tiny-streaming-en-34m",
+        "model": "HealthAI Voice 1.0",
+        "model_release": "healthai-voice-v1.0.0",
+        "base_model": "Moonshine Tiny Streaming English 34M",
     }
 
 

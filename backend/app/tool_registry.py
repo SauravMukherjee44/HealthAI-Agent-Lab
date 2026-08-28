@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from .model_identity import model_identity
 from .registry import ASSESSMENTS
 from .schemas import ToolSummary
 
@@ -21,7 +22,7 @@ SPECIALIST_TOOLS = {
     "heart_risk": SpecialistTool(
         slug="heart_risk",
         condition="heart",
-        name="Heart-risk screening",
+        name=model_identity("heart").display_name,
         description="Deterministic ONNX inference over the versioned UCI Statlog Heart input schema.",
         supported_population="Research demonstration using adults represented in the UCI Statlog Heart dataset.",
         confidence_policy="Return lower/elevated only at the versioned threshold; never label the result as a diagnosis.",
@@ -30,7 +31,7 @@ SPECIALIST_TOOLS = {
     "diabetes_risk": SpecialistTool(
         slug="diabetes_risk",
         condition="diabetes",
-        name="Early-diabetes signs screening",
+        name=model_identity("diabetes").display_name,
         description="Deterministic ONNX inference over a versioned 16-field symptom schema.",
         supported_population="Research demonstration using adults represented in the UCI early-stage diabetes dataset.",
         confidence_policy="Return lower/elevated only at the versioned threshold; never label the result as a diagnosis.",
@@ -39,7 +40,7 @@ SPECIALIST_TOOLS = {
     "kidney_risk": SpecialistTool(
         slug="kidney_risk",
         condition="kidney",
-        name="Kidney-disease pattern screening",
+        name=model_identity("kidney").display_name,
         description="Versioned ONNX inference over the 24-field UCI Chronic Kidney Disease schema.",
         supported_population="Research demonstration using the hospital population represented in the UCI Chronic Kidney Disease dataset.",
         confidence_policy="Require every laboratory and clinical field; return lower/elevated only at the versioned threshold and never diagnose CKD.",
@@ -48,7 +49,7 @@ SPECIALIST_TOOLS = {
     "liver_risk": SpecialistTool(
         slug="liver_risk",
         condition="liver",
-        name="Liver-disease pattern screening",
+        name=model_identity("liver").display_name,
         description="Versioned ONNX inference over the 10-field UCI ILPD laboratory schema.",
         supported_population="Research demonstration using patients represented in the UCI Indian Liver Patient Dataset.",
         confidence_policy="Require reviewed laboratory values; return lower/elevated only at the versioned threshold and never diagnose liver disease.",

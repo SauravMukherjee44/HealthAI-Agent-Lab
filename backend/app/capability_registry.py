@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from .model_identity import model_identity
 from .schemas import ToolSummary
 
 
@@ -45,7 +46,7 @@ def conversation_and_imaging_tools(artifacts_dir: Path) -> list[ToolSummary]:
         ),
         ToolSummary(
             slug="pneumonia_xray",
-            name="Pneumonia chest X-ray screening",
+            name=model_identity("pneumonia").display_name,
             kind="predictive_model",
             version=str(pneumonia_metadata.get("version", "training-required")),
             deployment_status="experimental" if pneumonia_available else "planned",
