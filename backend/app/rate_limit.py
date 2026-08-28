@@ -36,6 +36,12 @@ DAY = 60 * 60 * 24
 def limits_for(path: str, method: str) -> LimitPolicy | None:
     if method != "POST" or not path.startswith("/api/v1/"):
         return None
+    if path == "/api/v1/runtime/warm":
+        return LimitPolicy(
+            client=(Limit(2, DAY, "warm-daily"),),
+            ip=(Limit(20, DAY, "warm-ip-daily"),),
+            global_=(Limit(200, DAY, "warm-capacity"),),
+        )
     if path == "/api/v1/voice/transcribe":
         return LimitPolicy(
             client=(Limit(4, 600, "voice-short"), Limit(20, DAY, "voice-daily")),

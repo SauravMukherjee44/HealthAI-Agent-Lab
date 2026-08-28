@@ -437,6 +437,7 @@ Default visitor quotas:
 
 | Route group | Short window | Daily visitor limit | Daily IP limit | Global daily capacity |
 |---|---:|---:|---:|---:|
+| Content-free reasoner warm-up | — | 2 | 20 | 200 |
 | Chat / triage | 20/minute | 200 | 500 | 1,000 |
 | Voice transcription | 4/10 minutes | 20 | 60 | 100 |
 | Pneumonia image | 10/10 minutes | 50 | 150 | 300 |
@@ -530,7 +531,7 @@ The primary cost strategy is **no idle compute**:
 - CloudWatch retention is bounded.
 - A monthly AWS Budget provides early warning.
 
-Cold starts are the trade-off. Qwen can spend roughly 25 seconds loading its GGUF on a cold invocation, while warm requests are faster. For a portfolio workload this is preferable to paying for an idle instance; a real user-facing service would benchmark provisioned concurrency, quantization, streaming, and stricter latency SLOs.
+Cold starts are the trade-off. Qwen can spend roughly 25 seconds loading its GGUF on a cold invocation, while warm requests are faster. The landing page therefore requests a content-free asynchronous initialization shortly after first paint; it creates no conversation state, consumes no chat quota, is deduplicated in the browser for ten minutes, and has separate visitor/IP/global abuse limits. This improves the common first-message path without paying for an always-on instance or claiming that every cold start can be eliminated. A real user-facing service would benchmark provisioned concurrency, quantization, streaming, and stricter latency SLOs.
 
 ## Known limitations and roadmap
 

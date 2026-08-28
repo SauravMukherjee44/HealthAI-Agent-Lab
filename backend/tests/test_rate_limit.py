@@ -12,6 +12,12 @@ def test_route_limits_separate_chat_and_heavy_media():
     assert media and (media.requests, media.window_seconds, media.bucket) == (4, 600, "voice-short")
     assert limit_for("/health", "GET") is None
 
+    warm = limits_for("/api/v1/runtime/warm", "POST")
+    assert warm
+    assert warm.client[0].requests == 2
+    assert warm.ip[0].requests == 20
+    assert warm.global_[0].requests == 200
+
     chat_policy = limits_for("/api/v1/triage/message", "POST")
     assert chat_policy
     assert chat_policy.client[1].requests == 200

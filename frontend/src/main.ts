@@ -69,9 +69,33 @@ type PersistedSession = {
 };
 
 const STORAGE_KEY = "healthai.chat.v1";
+const WARMUP_KEY = "healthai.reasoner-warm.v1";
 const INITIAL_MESSAGE = "Describe what you are experiencing naturally. I can run a structured clinical-intake protocol, reason over the confirmed details, discuss general wellness, or prepare an evidence-backed research screening.";
+const STARTER_PROMPTS_HTML = `<div class="starter-prompts" aria-label="Example questions">
+  <button type="button" data-starter-prompt="I want to explore the heart-risk research screening."><span class="material-symbols-outlined">cardiology</span><span><strong>Explore heart risk</strong><small>Open Cardio 2.0 workflow</small></span><i>→</i></button>
+  <button type="button" data-starter-prompt="Could the diabetes research screening fit my concern?"><span class="material-symbols-outlined">glucose</span><span><strong>Check diabetes signs</strong><small>Open Glyco 2.0 workflow</small></span><i>→</i></button>
+  <button type="button" data-starter-prompt="I have kidney or liver lab results. Which research screening fits?"><span class="material-symbols-outlined">labs</span><span><strong>Review laboratory results</strong><small>Kidney or liver pathway</small></span><i>→</i></button>
+</div>`;
 
 const apiBase = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
+const warmReasoner = () => {
+  try {
+    const lastWarm = Number(sessionStorage.getItem(WARMUP_KEY) ?? 0);
+    if (Date.now() - lastWarm < 10 * 60 * 1000) return;
+    // Mark before dispatch to deduplicate reloads. Failure is intentionally silent:
+    // warm-up is only a latency optimization and never creates conversation state.
+    sessionStorage.setItem(WARMUP_KEY, String(Date.now()));
+  } catch {
+    // Storage can be disabled; one best-effort request is still safe.
+  }
+  void fetch(`${apiBase}/api/v1/runtime/warm`, {
+    method: "POST",
+    credentials: "include",
+    keepalive: true,
+  }).catch(() => undefined);
+};
+
 const chatForm = document.querySelector<HTMLFormElement>("#chat-form")!;
 const messageInput = document.querySelector<HTMLTextAreaElement>("#message-input")!;
 const messages = document.querySelector<HTMLDivElement>("#messages")!;
@@ -197,6 +221,10 @@ const showView = (name: string, updateHash = true) => {
   window.setTimeout(() => window.scrollTo({ top: 0, behavior: "auto" }), 0);
   if (target === "assessment") window.setTimeout(() => messageInput.focus({ preventScroll: true }), 50);
 };
+
+// Start the private reasoner while the visitor is still reading the landing page,
+// just after the first visual render has had an opportunity to paint.
+window.setTimeout(warmReasoner, 400);
 
 viewButtons.forEach((button) => button.addEventListener("click", () => showView(button.dataset.viewTarget ?? "lab")));
 const initialView = location.hash.slice(1);
@@ -556,10 +584,30 @@ chatForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = messageInput.value.trim();
   if (!text) return;
+  messages.querySelector(".starter-prompts")?.remove();
   lastInputChannel = messageInput.dataset.inputChannel === "voice" ? "Voice · HealthAI Voice 1.0" : "Text";
   delete messageInput.dataset.inputChannel;
   addMessage(text, "user");
   messageInput.value = "";
+  await submitTriage(text);
+});
+
+messageInput.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+  event.preventDefault();
+  if (chatForm.classList.contains("busy") || !messageInput.value.trim()) return;
+  chatForm.requestSubmit();
+});
+
+messages.addEventListener("click", async (event) => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-starter-prompt]");
+  if (!button || chatForm.classList.contains("busy")) return;
+  const text = button.dataset.starterPrompt?.trim();
+  if (!text) return;
+  messages.querySelectorAll<HTMLButtonElement>("[data-starter-prompt]").forEach((item) => { item.disabled = true; });
+  messages.querySelector(".starter-prompts")?.remove();
+  lastInputChannel = "Starter question";
+  addMessage(text, "user");
   await submitTriage(text);
 });
 
@@ -576,7 +624,7 @@ resetButton.addEventListener("click", () => {
   xrayInput.value = "";
   fieldsHost.hidden = true;
   fieldsHost.replaceChildren();
-  messages.innerHTML = `<div class="message assistant"><span class="assistant-avatar message-voice-avatar"><span class="material-symbols-outlined">graphic_eq</span></span><div><p>${INITIAL_MESSAGE}</p><small>HealthAI · now</small></div></div>`;
+  messages.innerHTML = `<div class="message assistant"><span class="assistant-avatar message-voice-avatar"><span class="material-symbols-outlined">graphic_eq</span></span><div><p>${INITIAL_MESSAGE}</p><small>HealthAI · now</small></div></div>${STARTER_PROMPTS_HTML}`;
   resetWorkspace();
 });
 
@@ -585,16 +633,86 @@ const renderAssessment = (condition: string, fields: AssessmentField[], knownFie
   const form = document.createElement("form");
   form.className = "inline-assessment";
   form.innerHTML = `
-    <div class="inline-head"><div><span>Tool selected</span><h3>${escapeHtml(conditionLabel(condition))}</h3></div><small>${fields.length} required inputs</small></div>
+    <div class="inline-head"><div><span>Tool selected</span><h3>${escapeHtml(conditionLabel(condition))}</h3></div><div class="assessment-head-actions"><small>${fields.length} required inputs</small><button class="sample-data-button" type="button"><span class="material-symbols-outlined">science</span>Load test data</button></div></div>
     <p class="review-copy">Enter reliable information and review every value before running this research model.</p>
     ${Object.keys(knownFields).length ? `<div class="prefill-note"><span class="material-symbols-outlined">auto_awesome</span><span><strong>${Object.keys(knownFields).length} values extracted</strong><small>Review every highlighted value before running the model.</small></span></div>` : ""}
     <div class="dynamic-fields">${fields.map((field) => renderField(field, knownFields[field.name])).join("")}</div>
     <label class="consent-check"><input type="checkbox" required><span>I confirm these values and understand this is not a diagnosis.</span></label>
     <button class="button primary full" type="submit">Run allowlisted tool <span>→</span></button>`;
   form.addEventListener("submit", handlePrediction);
+  form.querySelector<HTMLButtonElement>(".sample-data-button")!.addEventListener("click", () => loadTestData(form, fields));
   fieldsHost.replaceChildren(form);
   fieldsHost.hidden = false;
   setTimeout(() => fieldsHost.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+};
+
+const LOWER_PATTERN_TEST_VALUES: Record<string, number> = {
+  age: 48, sex: 0, gender: 0, chest_pain: 3, resting_bp: 128, serum_cholesterol: 210,
+  fasting_blood_sugar: 0, resting_ecg: 0, max_heart_rate: 158, exercise_angina: 0,
+  oldpeak: 0.8, st_slope: 1, major_vessels: 0, thal: 3,
+  blood_pressure: 78, specific_gravity: 1.02, albumin: 0, sugar: 0, red_blood_cells: 0,
+  pus_cell: 0, pus_cell_clumps: 0, bacteria: 0, blood_glucose_random: 105, blood_urea: 32,
+  serum_creatinine: 1.0, sodium: 139, potassium: 4.3, hemoglobin: 14.2,
+  packed_cell_volume: 43, white_blood_cell_count: 7600, red_blood_cell_count: 4.8,
+  hypertension: 0, diabetes_mellitus: 0, coronary_artery_disease: 0, appetite: 0,
+  pedal_edema: 0, anemia: 0, total_bilirubin: 0.9, direct_bilirubin: 0.2,
+  alkaline_phosphatase: 190, alanine_aminotransferase: 28, aspartate_aminotransferase: 25,
+  total_proteins: 7.1, albumin_globulin_ratio: 1.2,
+  polyuria: 0, polydipsia: 0, sudden_weight_loss: 0, weakness: 0, polyphagia: 0,
+  genital_thrush: 0, visual_blurring: 0, itching: 0, irritability: 0, delayed_healing: 0,
+  partial_paresis: 0, muscle_stiffness: 0, alopecia: 0, obesity: 0,
+};
+
+const ELEVATED_PATTERN_TEST_VALUES: Record<string, Record<string, number>> = {
+  heart: {
+    age: 68, sex: 1, chest_pain: 4, resting_bp: 180, serum_cholesterol: 330,
+    fasting_blood_sugar: 1, resting_ecg: 2, max_heart_rate: 88, exercise_angina: 1,
+    oldpeak: 4.5, st_slope: 3, major_vessels: 3, thal: 7,
+  },
+  diabetes: {
+    age: 58, gender: 1, polyuria: 1, polydipsia: 1, sudden_weight_loss: 1,
+    weakness: 1, polyphagia: 1, genital_thrush: 1, visual_blurring: 1, itching: 1,
+    irritability: 1, delayed_healing: 1, partial_paresis: 1, muscle_stiffness: 1,
+    alopecia: 0, obesity: 1,
+  },
+  kidney: {
+    age: 67, blood_pressure: 160, specific_gravity: 1.005, albumin: 4, sugar: 3,
+    red_blood_cells: 1, pus_cell: 1, pus_cell_clumps: 1, bacteria: 1,
+    blood_glucose_random: 260, blood_urea: 145, serum_creatinine: 7.2, sodium: 126,
+    potassium: 6.1, hemoglobin: 8.4, packed_cell_volume: 27,
+    white_blood_cell_count: 13800, red_blood_cell_count: 3.1, hypertension: 1,
+    diabetes_mellitus: 1, coronary_artery_disease: 1, appetite: 1, pedal_edema: 1, anemia: 1,
+  },
+  liver: {
+    age: 62, gender: 1, total_bilirubin: 8.4, direct_bilirubin: 4.8,
+    alkaline_phosphatase: 610, alanine_aminotransferase: 185,
+    aspartate_aminotransferase: 240, total_proteins: 5.2, albumin: 2.1,
+    albumin_globulin_ratio: 0.55,
+  },
+};
+
+const loadTestData = (form: HTMLFormElement, fields: AssessmentField[], condition = activeCondition) => {
+  const fixtureKind = Math.random() < 0.5 ? "lower" : "elevated";
+  const values = fixtureKind === "elevated" && condition
+    ? { ...LOWER_PATTERN_TEST_VALUES, ...(ELEVATED_PATTERN_TEST_VALUES[condition] ?? {}) }
+    : LOWER_PATTERN_TEST_VALUES;
+  fields.forEach((field) => {
+    const control = form.elements.namedItem(field.name) as HTMLInputElement | HTMLSelectElement | null;
+    if (!control) return;
+    const fallback = field.field_type === "select"
+      ? field.options[0]?.value
+      : ((field.minimum ?? 0) + (field.maximum ?? 100)) / 2;
+    const conditionSpecific = condition === "liver" && fixtureKind === "lower" && field.name === "albumin" ? 4.1 : undefined;
+    control.value = String(conditionSpecific ?? values[field.name] ?? fallback ?? "");
+    control.classList.add("sample-prefilled");
+    control.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  const consent = form.querySelector<HTMLInputElement>(".consent-check input");
+  if (consent) consent.checked = false;
+  const note = form.querySelector<HTMLElement>(".sample-data-note") ?? document.createElement("div");
+  note.className = "sample-data-note";
+  note.innerHTML = `<span class="material-symbols-outlined">dataset</span><span><strong>${fixtureKind === "elevated" ? "Elevated-pattern" : "Lower-pattern"} test values loaded</strong><small>These are synthetic demonstration values—not your health data. Each load randomly selects one of two test scenarios; review every value before running the research model.</small></span>`;
+  form.querySelector(".dynamic-fields")?.before(note);
 };
 
 const renderField = (field: AssessmentField, knownValue?: string | number) => {
@@ -643,7 +761,9 @@ async function handlePrediction(event: SubmitEvent) {
 }
 
 const renderResult = (result: Prediction) => {
-  const probability = result.probability === null ? "Not available" : `${Math.round(result.probability * 100)}% model score`;
+  const probability = result.probability === null
+    ? "An estimated probability is not available for this run"
+    : `${Math.round(result.probability * 100)}% estimated probability of the model's target pattern`;
   const isImage = result.condition === "pneumonia";
   fieldsHost.innerHTML = `<div class="screening-result ${result.band}">
     <div class="result-signal"><span>${result.band === "elevated" ? "↑" : "✓"}</span></div>
@@ -915,7 +1035,7 @@ const modelLoading = (label: string) => {
 };
 
 const renderModelForm = (model: ModelExperience, fields: AssessmentField[]) => {
-  playgroundStage.innerHTML = `<div class="playground-head"><div><span>Interactive model run</span><h3>Complete the evidence deck</h3></div><div class="form-level"><span id="model-form-count">0 / ${fields.length}</span><i><b id="model-form-progress"></b></i></div></div>
+  playgroundStage.innerHTML = `<div class="playground-head"><div><span>Interactive model run</span><h3>Complete the evidence deck</h3></div><div class="assessment-head-actions"><button class="sample-data-button" type="button"><span class="material-symbols-outlined">science</span>Load test data</button><div class="form-level"><span id="model-form-count">0 / ${fields.length}</span><i><b id="model-form-progress"></b></i></div></div></div>
     <form class="model-arena-form" id="model-arena-form"><div class="model-arena-fields">${fields.map((field) => renderField(field)).join("")}</div><div class="arena-submit"><label class="consent-check"><input name="consent" type="checkbox" required><span>I reviewed these values and understand this is research—not a diagnosis.</span></label><button class="button models-primary" type="submit">Run ${escapeHtml(model.name)} <span>→</span></button></div></form>`;
   const form = playgroundStage.querySelector<HTMLFormElement>("#model-arena-form")!;
   const count = playgroundStage.querySelector<HTMLElement>("#model-form-count")!;
@@ -927,6 +1047,10 @@ const renderModelForm = (model: ModelExperience, fields: AssessmentField[]) => {
   };
   form.addEventListener("input", updateProgress);
   form.addEventListener("change", updateProgress);
+  playgroundStage.querySelector<HTMLButtonElement>(".sample-data-button")!.addEventListener("click", () => {
+    loadTestData(form, fields, model.slug);
+    updateProgress();
+  });
   form.addEventListener("submit", (event) => void runPlaygroundPrediction(event, model));
 };
 
@@ -996,7 +1120,7 @@ const renderModelThinking = (model: ModelExperience) => {
 const renderPlaygroundResult = (model: ModelExperience, result: Prediction) => {
   const score = result.probability === null ? 0 : Math.round(result.probability * 100);
   const elevated = result.band === "elevated";
-  playgroundStage.innerHTML = `<div class="arena-result ${result.band}">${Array.from({length: 14}, (_, index) => `<i class="result-spark" style="--spark:${index}"></i>`).join("")}<div class="result-score-ring" style="--score:${score}"><div><strong>${result.probability === null ? "—" : `${score}%`}</strong><small>model score</small></div></div><div class="arena-result-copy"><span class="result-unlocked"><i class="material-symbols-outlined">verified</i> ${escapeHtml(result.model_name)} result unlocked</span><h3>${elevated ? "Elevated pattern identified" : "No elevated pattern identified"}</h3><p>This model output can be wrong and does not establish or rule out a condition. Review its dataset boundary before interpreting the score.</p><div class="result-provenance"><span><small>Model</small><strong>${escapeHtml(result.model_name)}</strong><small>${escapeHtml(result.model_version)}</small></span><span><small>Status</small><strong>${escapeHtml(result.validation_status)}</strong></span><span><small>Pipeline</small><strong>Verified ONNX</strong></span></div><div class="arena-result-actions"><button class="button models-primary" type="button" data-model-export="pdf">Download PDF</button><button class="button secondary" type="button" data-model-export="xlsx">Download Excel</button><button class="model-run-again" type="button">Run again ↻</button></div></div></div>`;
+  playgroundStage.innerHTML = `<div class="arena-result ${result.band}">${Array.from({length: 14}, (_, index) => `<i class="result-spark" style="--spark:${index}"></i>`).join("")}<div class="result-score-ring" style="--score:${score}"><div><strong>${result.probability === null ? "—" : `${score}%`}</strong><small>estimated probability</small></div></div><div class="arena-result-copy"><span class="result-unlocked"><i class="material-symbols-outlined">verified</i> ${escapeHtml(result.model_name)} result unlocked</span><h3>${elevated ? "Elevated pattern identified" : "No elevated pattern identified"}</h3><p>${result.probability === null ? "An estimated probability is not available for this run." : `${score}% estimated probability of the model's target pattern.`} This research estimate can be wrong and does not establish or rule out a condition.</p><div class="result-provenance"><span><small>Model</small><strong>${escapeHtml(result.model_name)}</strong><small>${escapeHtml(result.model_version)}</small></span><span><small>Status</small><strong>${escapeHtml(result.validation_status)}</strong></span><span><small>Pipeline</small><strong>Verified ONNX</strong></span></div><div class="arena-result-actions"><button class="button models-primary" type="button" data-model-export="pdf">Download PDF</button><button class="button secondary" type="button" data-model-export="xlsx">Download Excel</button><button class="model-run-again" type="button">Run again ↻</button></div></div></div>`;
   playgroundStage.querySelectorAll<HTMLButtonElement>("[data-model-export]").forEach((button) => button.addEventListener("click", () => void downloadReport(button.dataset.modelExport!)));
   playgroundStage.querySelector<HTMLButtonElement>(".model-run-again")!.addEventListener("click", () => void selectModelExperience(model.slug, false));
 };

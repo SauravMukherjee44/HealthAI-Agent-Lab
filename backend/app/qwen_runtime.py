@@ -40,6 +40,10 @@ class DockerModelRunner:
             "model-ready" if available else "runtime-ready-model-missing",
         )
 
+    def warm(self) -> bool:
+        """Probe the local model runner without generating or retaining content."""
+        return self.status().available
+
     def __call__(self, prompt: str) -> str:
         payload = self._request(
             "POST",
@@ -174,6 +178,18 @@ class AwsLambdaModelRunner:
 
     def status(self) -> QwenRuntimeStatus:
         return QwenRuntimeStatus(True, "aws-lambda", self.model, "configured-private-function")
+
+    def warm(self) -> bool:
+        """Start model loading asynchronously so the browser never waits for it."""
+        try:
+            self.client.invoke(
+                FunctionName=self.function_name,
+                InvocationType="Event",
+                Payload=json.dumps({"operation": "warmup"}).encode("utf-8"),
+            )
+        except Exception as exc:
+            raise QwenRuntimeUnavailable("Private Qwen Lambda warm-up failed.") from exc
+        return True
 
     def __call__(self, prompt: str) -> str:
         return self._invoke({"operation": "decision", "prompt": prompt})["content"]

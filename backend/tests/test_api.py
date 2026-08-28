@@ -19,6 +19,12 @@ def test_health_endpoint():
     assert response.json()["status"] == "healthy"
 
 
+def test_runtime_warmup_is_content_free_and_disabled_for_rules_backend():
+    response = client.post("/api/v1/runtime/warm")
+    assert response.status_code == 200
+    assert response.json() == {"status": "disabled"}
+
+
 def test_model_catalog_uses_canonical_versioned_names():
     response = client.get("/api/v1/models")
     assert response.status_code == 200

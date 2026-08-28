@@ -14,7 +14,7 @@ from .config import get_settings
 from .images import ImagePredictionService, InvalidMedicalImage
 from .orchestrator import TriageOrchestrator
 from .predictions import InvalidAssessment, ModelUnavailable, PredictionService
-from .qwen_runtime import AwsLambdaModelRunner, DockerModelRunner
+from .qwen_runtime import AwsLambdaModelRunner, DockerModelRunner, QwenRuntimeUnavailable
 from .rate_limit import RateLimitMiddleware
 from .reports import build_pdf, build_xlsx
 from .routing import HybridRouter, QwenJsonRouter, QwenSymptomQuestionSelector, RulesRouter
@@ -118,6 +118,19 @@ def tools():
             "emergency_gate": "deterministic-pre-routing",
         },
     }
+
+
+@app.post("/api/v1/runtime/warm")
+def warm_runtime():
+    """Request content-free reasoner initialization without creating chat state."""
+    if settings.orchestrator_backend == "rules":
+        return {"status": "disabled"}
+    try:
+        accepted = qwen_runtime.warm()
+    except QwenRuntimeUnavailable:
+        # Warm-up is an optimization; never make the site itself unavailable.
+        return {"status": "unavailable"}
+    return {"status": "accepted" if accepted else "unavailable"}
 
 
 @app.post("/api/v1/triage/start", response_model=TriageResponse)

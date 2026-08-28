@@ -44,6 +44,9 @@ def _complete(system: str, user: str, schema: dict[str, Any], max_tokens: int) -
 def handler(event, _context):
     try:
         operation = event.get("operation")
+        if operation == "warmup":
+            _get_model()
+            return {"status": "ready"}
         if operation == "decision":
             content = _complete(
                 (
