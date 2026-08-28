@@ -36,6 +36,11 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: $default
+      # Coarse public-edge protection. Application limits below this layer are
+      # more specific, but these token buckets reject floods before Lambda runs.
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 5
       CorsConfiguration:
         AllowOrigins: [!Ref AllowedOrigin]
         AllowHeaders: [Content-Type]
@@ -79,12 +84,18 @@ Resources:
             ApiId: !Ref HealthApi
             Path: /
             Method: ANY
+            RouteSettings:
+              ThrottlingBurstLimit: 15
+              ThrottlingRateLimit: 5
         Proxy:
           Type: HttpApi
           Properties:
             ApiId: !Ref HealthApi
             Path: /{proxy+}
             Method: ANY
+            RouteSettings:
+              ThrottlingBurstLimit: 10
+              ThrottlingRateLimit: 3
 
   QwenFunction:
     Type: AWS::Serverless::Function
@@ -144,6 +155,9 @@ Resources:
             ApiId: !Ref HealthApi
             Path: /api/v1/voice/transcribe
             Method: POST
+            RouteSettings:
+              ThrottlingBurstLimit: 2
+              ThrottlingRateLimit: 1
 
   ApiLogGroup:
     Type: AWS::Logs::LogGroup

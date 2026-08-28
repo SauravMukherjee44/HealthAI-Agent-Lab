@@ -61,19 +61,21 @@ app = FastAPI(
     description="Evaluation-driven educational screening APIs. Not a medical device.",
 )
 app.add_middleware(
+    RateLimitMiddleware,
+    secret=settings.state_secret,
+    table_name=settings.quota_table,
+    enabled=settings.rate_limit_enabled,
+    secure_cookie=settings.environment == "production",
+)
+# Added after the limiter so CORS remains the outermost middleware and browser
+# clients can read a structured 429 response and its Retry-After header.
+app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins,
     allow_credentials="*" not in settings.origins,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
     expose_headers=["Retry-After", "X-RateLimit-Limit", "X-RateLimit-Remaining"],
-)
-app.add_middleware(
-    RateLimitMiddleware,
-    secret=settings.state_secret,
-    table_name=settings.quota_table,
-    enabled=settings.rate_limit_enabled,
-    secure_cookie=settings.environment == "production",
 )
 
 

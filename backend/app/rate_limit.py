@@ -23,16 +23,60 @@ class Limit:
     bucket: str
 
 
-def limit_for(path: str, method: str) -> Limit | None:
+@dataclass(frozen=True)
+class LimitPolicy:
+    client: tuple[Limit, ...]
+    ip: tuple[Limit, ...]
+    global_: tuple[Limit, ...]
+
+
+DAY = 60 * 60 * 24
+
+
+def limits_for(path: str, method: str) -> LimitPolicy | None:
     if method != "POST" or not path.startswith("/api/v1/"):
         return None
-    if path == "/api/v1/voice/transcribe" or path == "/api/v1/images/pneumonia/predict":
-        return Limit(8, 300, "media")
-    if path.startswith("/api/v1/reports/") or "/predict" in path:
-        return Limit(20, 300, "model")
+    if path == "/api/v1/voice/transcribe":
+        return LimitPolicy(
+            client=(Limit(4, 600, "voice-short"), Limit(20, DAY, "voice-daily")),
+            ip=(Limit(12, 600, "voice-ip-short"), Limit(60, DAY, "voice-ip-daily")),
+            global_=(Limit(100, DAY, "voice-capacity"),),
+        )
+    if path == "/api/v1/images/pneumonia/predict":
+        return LimitPolicy(
+            client=(Limit(10, 600, "image-short"), Limit(50, DAY, "image-daily")),
+            ip=(Limit(30, 600, "image-ip-short"), Limit(150, DAY, "image-ip-daily")),
+            global_=(Limit(300, DAY, "image-capacity"),),
+        )
+    if path.startswith("/api/v1/reports/"):
+        return LimitPolicy(
+            client=(Limit(10, 600, "report-short"), Limit(50, DAY, "report-daily")),
+            ip=(Limit(30, 600, "report-ip-short"), Limit(150, DAY, "report-ip-daily")),
+            global_=(Limit(500, DAY, "report-capacity"),),
+        )
+    if "/predict" in path:
+        return LimitPolicy(
+            client=(Limit(20, 300, "model-short"), Limit(200, DAY, "model-daily")),
+            ip=(Limit(60, 300, "model-ip-short"), Limit(600, DAY, "model-ip-daily")),
+            global_=(Limit(2000, DAY, "model-capacity"),),
+        )
     if path.startswith("/api/v1/triage/"):
-        return Limit(30, 60, "chat")
-    return Limit(30, 60, "api")
+        return LimitPolicy(
+            client=(Limit(20, 60, "chat-short"), Limit(200, DAY, "chat-daily")),
+            ip=(Limit(60, 60, "chat-ip-short"), Limit(500, DAY, "chat-ip-daily")),
+            global_=(Limit(1000, DAY, "chat-capacity"),),
+        )
+    return LimitPolicy(
+        client=(Limit(30, 60, "api-short"), Limit(300, DAY, "api-daily")),
+        ip=(Limit(90, 60, "api-ip-short"), Limit(900, DAY, "api-ip-daily")),
+        global_=(Limit(3000, DAY, "api-capacity"),),
+    )
+
+
+def limit_for(path: str, method: str) -> Limit | None:
+    """Return the primary browser limit for compatibility and UI metadata."""
+    policy = limits_for(path, method)
+    return policy.client[0] if policy else None
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -53,29 +97,48 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._lock = threading.Lock()
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        limit = limit_for(request.url.path, request.method)
-        if not self.enabled or limit is None:
+        policy = limits_for(request.url.path, request.method)
+        if not self.enabled or policy is None:
             return await call_next(request)
 
         client_id, issued = self._client_id(request)
+        ip_id = self._ip_id(request)
         now = int(time.time())
-        window = now // limit.window_seconds
-        key_material = f"{client_id}:{limit.bucket}:{window}".encode()
-        key = "rl#" + hashlib.sha256(key_material).hexdigest()
-        count = self._increment(key, now + limit.window_seconds * 2)
-        remaining = max(0, limit.requests - count)
-        retry_after = limit.window_seconds - (now % limit.window_seconds)
+        checks = (
+            *(("client", client_id, limit) for limit in policy.client),
+            *(("ip", ip_id, limit) for limit in policy.ip),
+            *(("global", "healthai", limit) for limit in policy.global_),
+        )
+        violations: list[tuple[str, Limit, int]] = []
+        primary_count = 0
+        for index, (scope, identity, limit) in enumerate(checks):
+            window = now // limit.window_seconds
+            key_material = f"{scope}:{identity}:{limit.bucket}:{limit.window_seconds}:{window}".encode()
+            key = "rl#" + hashlib.sha256(key_material).hexdigest()
+            count = self._increment(key, now + limit.window_seconds * 2)
+            if index == 0:
+                primary_count = count
+            if count > limit.requests:
+                violations.append((scope, limit, limit.window_seconds - (now % limit.window_seconds)))
 
-        if count > limit.requests:
+        primary = policy.client[0]
+        remaining = max(0, primary.requests - primary_count)
+        if violations:
+            scope, _violated_limit, retry_after = max(violations, key=lambda item: item[2])
+            detail = (
+                "The research service has reached its shared capacity. Please try again later."
+                if scope == "global"
+                else f"Too many requests. Please try again in {retry_after} seconds."
+            )
             response: Response = JSONResponse(
                 status_code=429,
-                content={"detail": f"Too many requests. Please try again in {retry_after} seconds."},
+                content={"detail": detail},
                 headers={"Retry-After": str(retry_after)},
             )
         else:
             response = await call_next(request)
 
-        response.headers["X-RateLimit-Limit"] = str(limit.requests)
+        response.headers["X-RateLimit-Limit"] = str(primary.requests)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         if issued:
             response.set_cookie(
@@ -102,6 +165,12 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         user_agent = request.headers.get("user-agent", "unknown")[:256]
         opaque = hmac.new(self.secret, f"{host}|{user_agent}".encode(), hashlib.sha256).hexdigest()
         return opaque, True
+
+    def _ip_id(self, request: Request) -> str:
+        # request.client is populated from API Gateway's authenticated sourceIp
+        # by Mangum. Do not trust a caller-provided X-Forwarded-For value here.
+        host = request.client.host if request.client else "unknown"
+        return hmac.new(self.secret, f"ip|{host}".encode(), hashlib.sha256).hexdigest()
 
     def _increment(self, key: str, expires_at: int) -> int:
         if self.table is not None:

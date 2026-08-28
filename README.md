@@ -81,12 +81,12 @@ Research status is not encoded into the model name. `research`, `experimental`, 
 
 | Capability | What the user experiences | Implementation |
 |---|---|---|
-| Natural-language intake | Text or voice conversation in English/Hindi | Qwen3-0.6B proposal layer + deterministic fallback |
+| Natural-language intake | Text or voice conversation in English/Hindi | **HealthAI Reasoner 1.0** · Qwen3-0.6B proposal layer + deterministic fallback |
 | Immediate specialist routing | Explicit heart, diabetes, kidney, or liver requests open the relevant assessment without a long interview | Allowlisted intent router and typed tool registry |
 | General symptom intake | Bounded follow-up questions for concerns such as fever, cough, or reflux | Stateful symptom protocol with repetition protection |
-| Medical voice AI | Animated recorder, editable transcript, explicit confirmation | Moonshine Tiny Streaming English, 34M parameters |
-| Research screening | Validated schema, ONNX inference, calibrated threshold, provenance | Heart, diabetes, kidney, and liver pipelines |
-| Image research | Chest X-ray upload and experimental pneumonia score | PneumoniaMNIST baseline; pediatric 28×28 benchmark only |
+| Medical voice AI | Animated recorder, editable transcript, explicit confirmation | **HealthAI Voice 1.0** · Moonshine Tiny Streaming English, 34M parameters |
+| Research screening | Validated schema, ONNX inference, calibrated threshold, provenance | **HealthAI Cardio 2.0**, **Glyco 2.0**, **Renal 2.0**, and **Hepatic 2.0** |
+| Image research | Chest X-ray upload and experimental pneumonia score | **HealthAI PulmoVision 1.0** · PneumoniaMNIST pediatric benchmark |
 | Exportable result | Branded health-style report in PDF or XLSX | Server-generated report bound to a short-lived token |
 | Anonymous memory | Chat survives refresh; Clear history removes it | Browser `localStorage`, no account required |
 | Abuse controls | Friendly rate-limit response and retry window | Opaque cookie + DynamoDB TTL counters |
@@ -98,13 +98,13 @@ Research status is not encoded into the model name. `research`, `experimental`, 
 flowchart LR
     U[Browser\nReact-free TypeScript UI] -->|HTTPS| G[API Gateway\nHTTP API]
     G --> A[FastAPI + Mangum\nAPI Lambda]
-    G --> V[Moonshine ASR\nVoice Lambda]
+    G --> V[HealthAI Voice 1.0\nMoonshine 34M · Voice Lambda]
     A --> S[Deterministic\nSafety Gate]
     S --> R[Hybrid Router]
-    R --> Q[Qwen3-0.6B Q8\nPrivate Lambda]
+    R --> Q[HealthAI Reasoner 1.0\nQwen3-0.6B Q8 · Private Lambda]
     R --> P[Policy Validator]
     P --> T[Typed Tool Registry]
-    T --> O[ONNX Specialist Models]
+    T --> O[Versioned HealthAI\nONNX Research Models]
     A --> D[(DynamoDB\nquota counters only)]
     A -. reserved async audio path .-> B[(Encrypted S3)]
     B -.-> X[SQS + DLQ]
@@ -118,9 +118,9 @@ flowchart LR
 |---|---|---|
 | Web application | TypeScript 5.7, Vite 6 | Compiled and served by the API Lambda |
 | API | Python 3.12, FastAPI, Mangum | x86_64 Lambda, 2 GB, 30-second timeout |
-| Language model | Qwen3-0.6B GGUF Q8, llama.cpp | Private x86_64 Lambda, 3,008 MB, scale-to-zero |
-| Voice model | Moonshine Tiny Streaming English 34M | Private x86_64 Lambda, 3,008 MB, scale-to-zero |
-| Tabular inference | ONNX Runtime | Runs inside the API Lambda on CPU |
+| **HealthAI Reasoner 1.0** | Qwen3-0.6B GGUF Q8, llama.cpp | Private x86_64 Lambda, 3,008 MB, scale-to-zero |
+| **HealthAI Voice 1.0** | Moonshine Tiny Streaming English 34M | Private x86_64 Lambda, 3,008 MB, scale-to-zero |
+| **HealthAI research models 2.0** | Versioned ONNX pipelines | Run inside the API Lambda on CPU |
 | Quotas | DynamoDB on-demand + TTL | Stores opaque counters, never chat or clinical text |
 | Temporary audio foundation | S3 + SQS + DLQ | Encrypted, one-day lifecycle; reserved for async ASR work |
 | Observability | JSON CloudWatch logs + X-Ray | API logs 14 days; Qwen/voice logs 7 days |
@@ -197,16 +197,16 @@ flowchart TD
 
 The orchestration contract permits only known modes and registered tools. The system reconciles Qwen output against exact evidence and never treats free-form generated prose as a model invocation.
 
-### Current tool surface
+### Current versioned tool surface
 
-- `heart_risk` — 13 structured inputs
-- `diabetes_risk` — 16 structured inputs
-- `kidney_risk` — 24 structured inputs
-- `liver_risk` — 10 structured inputs
+- **HealthAI Cardio 2.0** · `heart_risk` · `healthai-cardio-v2.0.0` — 13 structured inputs
+- **HealthAI Glyco 2.0** · `diabetes_risk` · `healthai-glyco-v2.0.0` — 16 structured inputs
+- **HealthAI Renal 2.0** · `kidney_risk` · `healthai-renal-v2.0.0` — 24 structured inputs
+- **HealthAI Hepatic 2.0** · `liver_risk` · `healthai-hepatic-v2.0.0` — 10 structured inputs
 - `symptom_interview` — bounded general-intake protocol
 - `wellness_guidance` — non-diagnostic general information
-- `pneumonia_image` — experimental pediatric benchmark route
-- `skin_image` — planned and deliberately unavailable until a suitable evaluated artifact exists
+- **HealthAI PulmoVision 1.0** · `pneumonia_xray` · `healthai-pulmovision-v1.0.0` — experimental pediatric benchmark route
+- `skin_image_triage` — planned and deliberately unavailable until a suitable evaluated artifact exists
 
 The registry returns capability status at runtime, so an unavailable artifact cannot silently become an active tool.
 
@@ -216,13 +216,13 @@ All shipped specialist artifacts are compact ONNX pipelines committed with machi
 
 ### Dataset provenance
 
-| Model | Dataset | Samples | Source/license |
+| Research model | Dataset | Samples | Source/license |
 |---|---:|---:|---|
-| Heart | UCI Heart Disease | 270 | DOI `10.24432/C57303`, CC BY 4.0 |
-| Diabetes | UCI Early Stage Diabetes Risk Prediction | 520 | DOI `10.24432/C5VG8H`, CC BY 4.0 |
-| Kidney | UCI Chronic Kidney Disease | 400 | DOI `10.24432/C5G020`, CC BY 4.0 |
-| Liver | UCI ILPD | 583 | DOI `10.24432/C5D02C`, CC BY 4.0 |
-| Pneumonia | MedMNIST PneumoniaMNIST | 5,856 | DOI `10.5281/zenodo.10519652`, CC BY 4.0 |
+| **HealthAI Cardio 2.0** | UCI Heart Disease | 270 | DOI `10.24432/C57303`, CC BY 4.0 |
+| **HealthAI Glyco 2.0** | UCI Early Stage Diabetes Risk Prediction | 520 | DOI `10.24432/C5VG8H`, CC BY 4.0 |
+| **HealthAI Renal 2.0** | UCI Chronic Kidney Disease | 400 | DOI `10.24432/C5G020`, CC BY 4.0 |
+| **HealthAI Hepatic 2.0** | UCI ILPD | 583 | DOI `10.24432/C5D02C`, CC BY 4.0 |
+| **HealthAI PulmoVision 1.0** | MedMNIST PneumoniaMNIST | 5,856 | DOI `10.5281/zenodo.10519652`, CC BY 4.0 |
 
 The pneumonia downloader verifies the published MD5 checksum and preserves the official split. Review `backend/training/README.md` for complete feature mappings and commands.
 
@@ -256,24 +256,24 @@ make train
 
 ### Current frozen-test results
 
-| Model | Test n | AUROC | AUPRC | Sensitivity | Specificity | Brier |
+| Research model and release | Test n | AUROC | AUPRC | Sensitivity | Specificity | Brier |
 |---|---:|---:|---:|---:|---:|---:|
-| Diabetes v2 | 104 | 0.9965 | 0.9978 | 0.9375 | 0.9750 | 0.0272 |
-| Heart v2 | 54 | 0.8792 | 0.8376 | 1.0000 | 0.3667 | 0.1408 |
-| Kidney v2 | 80 | 1.0000 | 1.0000 | 0.9000 | 1.0000 | 0.0118 |
-| Liver v2 | 117 | 0.7548 | 0.8880 | 0.8675 | 0.3824 | 0.2022 |
-| Pneumonia v2 | 624 | 0.9267 | 0.9264 | 0.9359 | 0.7949 | 0.1029 |
+| **HealthAI Glyco 2.0**<br><sub>`healthai-glyco-v2.0.0`</sub> | 104 | 0.9965 | 0.9978 | 0.9375 | 0.9750 | 0.0272 |
+| **HealthAI Cardio 2.0**<br><sub>`healthai-cardio-v2.0.0`</sub> | 54 | 0.8792 | 0.8376 | 1.0000 | 0.3667 | 0.1408 |
+| **HealthAI Renal 2.0**<br><sub>`healthai-renal-v2.0.0`</sub> | 80 | 1.0000 | 1.0000 | 0.9000 | 1.0000 | 0.0118 |
+| **HealthAI Hepatic 2.0**<br><sub>`healthai-hepatic-v2.0.0`</sub> | 117 | 0.7548 | 0.8880 | 0.8675 | 0.3824 | 0.2022 |
+| **HealthAI PulmoVision 1.0**<br><sub>`healthai-pulmovision-v1.0.0`</sub> | 624 | 0.9267 | 0.9264 | 0.9359 | 0.7949 | 0.1029 |
 
 > [!CAUTION]
 > These are small public benchmark results, not prospective or external clinical validation. Heart and liver specificity is currently weak. The perfect kidney discrimination may reflect dataset/source structure and must not be generalized. PneumoniaMNIST is a pediatric 28×28 benchmark and is not a production radiology model.
 
-## Qwen fine-tuning
+## HealthAI Reasoner fine-tuning
 
-The repository contains an MLX LoRA experiment for the orchestration contract. Fine-tuning is intentionally isolated from API dependencies and is treated as a promotion candidate, never an automatic replacement.
+**HealthAI Reasoner 1.0** is powered by Qwen3-0.6B Q8. The repository contains an MLX LoRA experiment for the next compatible Reasoner release. Fine-tuning is intentionally isolated from API dependencies and is treated as a promotion candidate, never an automatic replacement.
 
 ### Objective
 
-Teach Qwen3-0.6B to emit evidence-bound JSON for:
+Teach the Qwen3-0.6B base model to emit evidence-bound JSON for a future **HealthAI Reasoner 1.1** candidate:
 
 - conversation responses;
 - registered tool selection;
@@ -397,7 +397,7 @@ Docker Model Runner exposes the private local inference endpoint. If it is unava
 | `POST` | `/api/v1/triage/message` | Continue a bounded intake session |
 | `POST` | `/api/v1/assessments/{condition}/predict` | Validated ONNX inference |
 | `POST` | `/api/v1/images/pneumonia/predict` | Experimental image baseline |
-| `POST` | `/api/v1/voice/transcribe` | Private Moonshine transcription |
+| `POST` | `/api/v1/voice/transcribe` | HealthAI Voice 1.0 private transcription |
 | `POST` | `/api/v1/reports/pdf` | Generate a branded PDF |
 | `POST` | `/api/v1/reports/xlsx` | Generate a structured workbook |
 
@@ -431,16 +431,19 @@ Never commit a production state secret. Reuse the same secret across deployments
 - Emergency routing runs before Qwen or ONNX inference.
 - Production cookies are HttpOnly, Secure, and SameSite=Lax.
 
-Default quota windows:
+Anonymous requests are protected at three application scopes. The signed browser cookie gives a useful visitor a generous allowance, a separate hashed source-IP counter prevents cookie deletion or user-agent rotation from resetting the quota, and a global daily ceiling bounds total research-infrastructure consumption. API Gateway additionally applies a 3 requests/second steady-state limit with a burst of 10 on the Lambda proxy route, and a 1 request/second limit with a burst of 2 on voice transcription. Gateway throttling is best-effort and happens before Lambda invocation.
 
-| Route group | Limit |
-|---|---:|
-| Chat | 30 requests/minute |
-| Voice and image | 8 requests/5 minutes |
-| Model and report | 20 requests/5 minutes |
-| Other API writes | 30 requests/minute |
+Default visitor quotas:
 
-These controls mitigate casual abuse; cookie-based anonymous rate limiting is not a substitute for authenticated quotas or a WAF in a public high-traffic product.
+| Route group | Short window | Daily visitor limit | Daily IP limit | Global daily capacity |
+|---|---:|---:|---:|---:|
+| Chat / triage | 20/minute | 200 | 500 | 1,000 |
+| Voice transcription | 4/10 minutes | 20 | 60 | 100 |
+| Pneumonia image | 10/10 minutes | 50 | 150 | 300 |
+| Specialist prediction | 20/5 minutes | 200 | 600 | 2,000 |
+| PDF/XLSX reports | 10/10 minutes | 50 | 150 | 500 |
+
+Only HMAC-derived identifiers, window counters and TTL values enter DynamoDB; raw IP addresses, user-agent strings and clinical content do not. This is intentionally an anonymous research-demo policy, not an authentication or authorization system. A public product with materially higher traffic should place CloudFront and AWS WAF in front of the HTTP API or migrate to an API type that supports direct WAF association.
 
 ## AWS deployment
 
@@ -520,8 +523,8 @@ Backend tests cover API contracts, safety precedence, routing, repetition preven
 
 The primary cost strategy is **no idle compute**:
 
-- API, voice, and Qwen Lambdas scale to zero.
-- Qwen3-0.6B Q8 and Moonshine 34M fit CPU-oriented functions; no continuously running GPU is required.
+- API, **HealthAI Voice 1.0**, and **HealthAI Reasoner 1.0** Lambdas scale to zero.
+- Their underlying Qwen3-0.6B Q8 and Moonshine 34M models fit CPU-oriented functions; no continuously running GPU is required.
 - DynamoDB is on-demand.
 - Temporary S3 objects expire after one day.
 - CloudWatch retention is bounded.
@@ -531,11 +534,11 @@ Cold starts are the trade-off. Qwen can spend roughly 25 seconds loading its GGU
 
 ## Known limitations and roadmap
 
-- Expand Qwen fine-tuning data and maintain a genuinely held-out adversarial set.
+- Expand HealthAI Reasoner fine-tuning data and maintain a genuinely held-out adversarial set.
 - Add external, subgroup, calibration, and drift validation before any clinical claim.
 - Improve heart/liver specificity and investigate kidney dataset leakage/source effects.
 - Replace the PneumoniaMNIST demonstration with an appropriately governed imaging pipeline—or remove it from a clinical-facing product.
-- Extend multilingual ASR beyond the current English Moonshine model.
+- Extend HealthAI Voice beyond the current English Moonshine base model.
 - Add authenticated longitudinal records only with explicit consent, encryption, retention policy, and regulatory review.
 - Add WAF/API Gateway usage plans if public traffic grows.
 - Validate accessibility with automated and assistive-technology testing.

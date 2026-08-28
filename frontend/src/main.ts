@@ -104,6 +104,25 @@ const modelFilterButtons = document.querySelectorAll<HTMLButtonElement>("[data-m
 const registryRuntime = document.querySelector<HTMLElement>("#registry-runtime")!;
 const registryBody = document.querySelector<HTMLElement>("#model-registry-body")!;
 const researchButtons = document.querySelectorAll<HTMLButtonElement>("[data-research-target]");
+const simulationMessage = document.querySelector<HTMLTextAreaElement>("#sim-message")!;
+const simulationRun = document.querySelector<HTMLButtonElement>("#run-simulation")!;
+const simulationPresets = document.querySelectorAll<HTMLButtonElement>("[data-sim-prompt]");
+const simulationStatus = document.querySelector<HTMLElement>("#sim-runtime-status")!;
+const simulationTrace = document.querySelector<HTMLElement>("#sim-trace")!;
+const simulationRequestState = document.querySelector<HTMLElement>("#sim-request-state")!;
+const simulationLatency = document.querySelector<HTMLElement>("#sim-latency")!;
+const simulationReasonerDetail = document.querySelector<HTMLElement>("#sim-reasoner-detail")!;
+const simulationModelNodes = document.querySelectorAll<HTMLElement>("[data-model-node]");
+const simulationRouter = document.querySelector<HTMLElement>("#sim-router")!;
+const simulationAction = document.querySelector<HTMLElement>("#sim-action")!;
+const simulationTool = document.querySelector<HTMLElement>("#sim-tool")!;
+const simulationFields = document.querySelector<HTMLElement>("#sim-fields")!;
+const simulationResponse = document.querySelector<HTMLElement>("#sim-response")!;
+const architectureNodes = document.querySelectorAll<HTMLButtonElement>("[data-architecture-stage]");
+const architectureInspector = document.querySelector<HTMLElement>("#architecture-inspector")!;
+const contactForm = document.querySelector<HTMLFormElement>("#contact-form")!;
+const contactReady = document.querySelector<HTMLElement>("#contact-ready")!;
+const contactMailto = document.querySelector<HTMLAnchorElement>("#contact-mailto")!;
 
 let stateToken: string | null = null;
 let reportToken: string | null = null;
@@ -222,6 +241,169 @@ researchButtons.forEach((button) => button.addEventListener("click", () => {
   researchButtons.forEach((item) => item.classList.toggle("active", item === button));
   document.querySelector<HTMLElement>(`#${target}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }));
+
+const architectureDetails: Record<string, { icon: string; kicker: string; title: string; copy: string; facts: [string, string][] }> = {
+  safety: { icon: "security", kicker: "Stage 01 · deterministic policy", title: "Emergency language pre-empts every model.", copy: "This rule engine executes before Qwen, symptom protocols, or ONNX inference. A match produces an escalation response and later stages are bypassed.", facts: [["Input", "Normalized user text"], ["Authority", "Deterministic rules"], ["Failure mode", "Bypass all models"]] },
+  extraction: { icon: "data_object", kicker: "Stage 02 · evidence-bound state", title: "Only explicit evidence enters typed state.", copy: "The router may extract values only when supported by the user’s text. Pydantic contracts and field evidence prevent invented measurements from reaching a specialist tool.", facts: [["Input", "Reviewed text / transcript"], ["Contract", "TriageResponse schema"], ["Output", "Known and missing fields"]] },
+  orchestration: { icon: "account_tree", kicker: "Stage 03 · registry authorization", title: "A proposal is not permission to execute.", copy: "HealthAI Reasoner or the deterministic fallback can propose an action. The policy layer accepts only registered tool slugs with complete, schema-valid arguments.", facts: [["Proposal", "Rules or Qwen JSON"], ["Authority", "Tool registry"], ["Fallback", "Fail closed"]] },
+  verification: { icon: "fact_check", kicker: "Stage 04 · bounded provenance", title: "The output travels with its evidence boundary.", copy: "Responses and model results expose the selected action, validation status, release ID, limitations, and report provenance instead of presenting generated text as a clinical fact.", facts: [["Runtime", "Typed API response"], ["Models", "Versioned ONNX"], ["Boundary", "Not a diagnosis"]] },
+};
+
+const renderArchitectureDetail = (name: string) => {
+  const detail = architectureDetails[name] ?? architectureDetails.safety;
+  architectureNodes.forEach((node) => {
+    const active = node.dataset.architectureStage === name;
+    node.classList.toggle("active", active);
+    node.setAttribute("aria-selected", String(active));
+  });
+  architectureInspector.innerHTML = `<div class="inspector-signal"><span class="material-symbols-outlined">${detail.icon}</span><i></i></div><small>${detail.kicker}</small><h3>${detail.title}</h3><p>${detail.copy}</p><dl>${detail.facts.map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join("")}</dl>`;
+};
+
+architectureNodes.forEach((node) => node.addEventListener("click", () => renderArchitectureDetail(node.dataset.architectureStage ?? "safety")));
+
+const waitForSimulationFrame = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+let architectureAutoplay = true;
+let architectureAutoTimer: number | null = null;
+let architectureRunId = 0;
+
+type ArchitectureRoute = {
+  model: "heart" | "diabetes" | "kidney" | "liver" | "pneumonia" | "general";
+  label: string;
+  behavior: string;
+  contract: string;
+  reason: string;
+  signals: string[];
+};
+
+const findArchitectureRoute = (message: string): ArchitectureRoute => {
+  const text = message.toLowerCase();
+  const signals = [
+    [/x-?ray|radiograph|pneumonia/, "chest imaging"],
+    [/thirst|urinat|glucose|sugar|diabet/, "metabolic"],
+    [/creatinine|kidney|renal|egfr/, "renal"],
+    [/bilirubin|liver|hepatic|jaundice/, "hepatic"],
+    [/heart|cardiac|blood pressure|hypertension|cholesterol/, "cardiovascular"],
+    [/fever|cough|sore throat|headache|acidity|reflux/, "symptom intake"],
+  ].filter(([pattern]) => (pattern as RegExp).test(text)).map(([, label]) => label as string);
+  const detected = signals.length ? signals : ["general concern"];
+  if (/x-?ray|radiograph|pneumonia/.test(text)) return { model: "pneumonia", label: "HealthAI PulmoVision 1.0", behavior: "Request image + metadata", contract: "Chest X-ray upload", signals: detected, reason: "Imaging language selects the gated pediatric chest X-ray workflow; text alone never produces an image prediction." };
+  if (/thirst|urinat|glucose|sugar|diabet/.test(text)) return { model: "diabetes", label: "HealthAI Glyco 2.0", behavior: "Open structured screening", contract: "16 questionnaire fields", signals: detected, reason: "Metabolic signals make Glyco 2.0 the highest-specificity candidate. The HealthAI Reasoning Model proposes the route; the specialist owns the numerical estimate." };
+  if (/creatinine|kidney|renal|egfr/.test(text)) return { model: "kidney", label: "HealthAI Renal 2.0", behavior: "Collect laboratory inputs", contract: "24 clinical fields", signals: detected, reason: "Renal measurements map to the reviewed Renal 2.0 schema instead of asking the language model to estimate disease risk." };
+  if (/bilirubin|liver|hepatic|jaundice/.test(text)) return { model: "liver", label: "HealthAI Hepatic 2.0", behavior: "Collect laboratory inputs", contract: "10 laboratory fields", signals: detected, reason: "Hepatic terminology selects the tabular specialist and its explicit laboratory contract." };
+  if (/heart|cardiac|blood pressure|hypertension|cholesterol/.test(text)) return { model: "heart", label: "HealthAI Cardio 2.0", behavior: "Open structured screening", contract: "13 clinical fields", signals: detected, reason: "Cardiovascular intent routes to Cardio 2.0. The reasoner organizes the request but does not replace the validated tabular estimator." };
+  return { model: "general", label: "Stateful clinical intake", behavior: "Ask one contextual question", contract: "Symptoms + time + severity", signals: detected, reason: "No specialist input contract is satisfied yet, so the reasoning path gathers context rather than forcing an unrelated disease model." };
+};
+
+const resetArchitectureSimulation = () => {
+  simulationTrace.classList.remove("running", "complete");
+  simulationTrace.querySelectorAll<HTMLElement>("[data-sim-stage]").forEach((node) => node.classList.remove("active", "complete"));
+  simulationModelNodes.forEach((node) => node.classList.remove("candidate", "selected"));
+  simulationRouter.textContent = "—";
+  simulationAction.textContent = "—";
+  simulationTool.textContent = "—";
+  simulationFields.textContent = "—";
+  simulationReasonerDetail.textContent = "Intent + candidate tools";
+};
+
+const runLandingSimulation = async (automated = false) => {
+  const message = simulationMessage.value.trim();
+  if (message.length < 2) {
+    simulationMessage.focus();
+    return;
+  }
+  const runId = ++architectureRunId;
+  resetArchitectureSimulation();
+  simulationTrace.classList.add("running");
+  simulationStatus.className = "runtime-link-state running";
+  simulationStatus.innerHTML = `<i></i> ${automated ? "Autoplay routing" : "Mapping your message"}`;
+  simulationRequestState.textContent = "Reading message signals";
+  simulationLatency.textContent = automated ? "AUTO / ROUTING" : "MANUAL / ROUTING";
+  simulationResponse.textContent = "Following the model path…";
+  const route = findArchitectureRoute(message);
+  const origin = simulationTrace.querySelector<HTMLElement>('[data-sim-stage="0"]')!;
+  const reasoner = simulationTrace.querySelector<HTMLElement>('[data-sim-stage="1"]')!;
+  origin.classList.add("active");
+  await waitForSimulationFrame(330);
+  if (runId !== architectureRunId) return;
+  origin.classList.add("complete");
+  reasoner.classList.add("active");
+  simulationReasonerDetail.textContent = `Candidates: ${route.signals.join(" · ")}`;
+  simulationRouter.textContent = route.signals.join(" · ");
+  simulationModelNodes.forEach((node) => {
+    if (node.dataset.modelNode === route.model || node.dataset.modelNode === "general") node.classList.add("candidate");
+  });
+  await waitForSimulationFrame(520);
+  if (runId !== architectureRunId) return;
+  reasoner.classList.add("complete");
+  simulationModelNodes.forEach((node) => node.classList.toggle("selected", node.dataset.modelNode === route.model));
+  simulationAction.textContent = route.behavior;
+  simulationTool.textContent = route.label;
+  simulationFields.textContent = route.contract;
+  simulationResponse.textContent = route.reason;
+  simulationRequestState.textContent = `${route.label} selected`;
+  const activePreset = [...simulationPresets].find((button) => button.classList.contains("active"));
+  simulationLatency.textContent = automated ? `AUTO / ${activePreset?.textContent?.trim().toUpperCase() ?? "READY"}` : "MANUAL / READY";
+  simulationTrace.classList.remove("running");
+  simulationTrace.classList.add("complete");
+  simulationStatus.className = "runtime-link-state ready";
+  simulationStatus.innerHTML = `<i></i> ${automated ? "Autoplay · next path queued" : "Manual path ready"}`;
+};
+
+const stopArchitectureAutoplay = () => {
+  architectureAutoplay = false;
+  if (architectureAutoTimer !== null) window.clearTimeout(architectureAutoTimer);
+  architectureAutoTimer = null;
+  architectureRunId += 1;
+};
+
+const selectArchitecturePreset = (button: HTMLButtonElement) => {
+  simulationPresets.forEach((item) => item.classList.toggle("active", item === button));
+  simulationMessage.value = button.dataset.simPrompt ?? "";
+};
+
+const queueArchitectureAutoplay = (index = 0, delay = 700) => {
+  if (!architectureAutoplay || !simulationPresets.length) return;
+  architectureAutoTimer = window.setTimeout(async () => {
+    if (!architectureAutoplay) return;
+    const button = simulationPresets[index % simulationPresets.length];
+    selectArchitecturePreset(button);
+    await runLandingSimulation(true);
+    if (architectureAutoplay) queueArchitectureAutoplay((index + 1) % simulationPresets.length, 3600);
+  }, delay);
+};
+
+simulationPresets.forEach((button) => button.addEventListener("click", () => {
+  stopArchitectureAutoplay();
+  selectArchitecturePreset(button);
+  void runLandingSimulation(false);
+}));
+simulationMessage.addEventListener("input", () => {
+  if (architectureAutoplay) {
+    stopArchitectureAutoplay();
+    simulationStatus.className = "runtime-link-state ready";
+    simulationStatus.innerHTML = "<i></i> Manual mode";
+  }
+});
+simulationRun.addEventListener("click", () => {
+  stopArchitectureAutoplay();
+  void runLandingSimulation(false);
+});
+queueArchitectureAutoplay();
+
+contactForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!contactForm.reportValidity()) return;
+  const data = new FormData(contactForm);
+  const name = String(data.get("name") ?? "").trim();
+  const replyEmail = String(data.get("email") ?? "").trim();
+  const topic = String(data.get("topic") ?? "Support");
+  const message = String(data.get("message") ?? "").trim();
+  const subject = `[HealthAI Agent Lab] ${topic}`;
+  const body = `Name: ${name}\nReply email: ${replyEmail}\nTopic: ${topic}\n\n${message}`;
+  contactMailto.href = `mailto:SauravMukherjee928@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  contactReady.hidden = false;
+  contactReady.scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
 
 const renderTrace = (safety: "Guarded" | "Clear" | "Escalated", condition?: string | null, detail = "Message evaluated") => {
   entityGrid.innerHTML = `
