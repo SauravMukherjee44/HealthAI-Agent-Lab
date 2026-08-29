@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://iwbtmq43g4.execute-api.eu-north-1.amazonaws.com/"><strong>Open the live AWS demo →</strong></a>
+  <a href="https://healthai.sauravmukherjee.in/"><strong>Open the live demo →</strong></a>
 </p>
 
 <p align="center">
@@ -451,7 +451,7 @@ Only HMAC-derived identifiers, window counters and TTL values enter DynamoDB; ra
 
 Production currently runs in `eu-north-1` at:
 
-**[https://iwbtmq43g4.execute-api.eu-north-1.amazonaws.com/](https://iwbtmq43g4.execute-api.eu-north-1.amazonaws.com/)**
+**[https://healthai.sauravmukherjee.in/](https://healthai.sauravmukherjee.in/)**
 
 The design uses on-demand and scale-to-zero resources for a low-traffic portfolio workload. It avoids an always-on GPU and targets a **USD 20/month** guardrail, although a Budget alert is not a hard spending cap.
 
@@ -505,8 +505,8 @@ The template sends a forecast alert at 60% and an actual-spend alert at 90%. Use
 ### Smoke test
 
 ```bash
-curl -fsS https://iwbtmq43g4.execute-api.eu-north-1.amazonaws.com/health
-curl -fsS https://iwbtmq43g4.execute-api.eu-north-1.amazonaws.com/api/v1/tools
+curl -fsS https://healthai.sauravmukherjee.in/health
+curl -fsS https://healthai.sauravmukherjee.in/api/v1/tools
 ```
 
 ## Evaluation and quality gates
